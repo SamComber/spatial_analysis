@@ -5,6 +5,8 @@ output:
     toc: true
     number_sections: true
 bibliography: references.bib
+header-includes:
+   - \setlength\parindent{24pt}
 ---
 
 \section{Demonstrating the MAUP}
@@ -13,11 +15,18 @@ bibliography: references.bib
 
 <!-- introduce problem -->
 
-Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena [@Openshaw]. Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results to the definition of units for which data are collected." According to the literature, the MAUP constrains the reliability of analyses for aggregated spatial data, as findings have shown varying results with the scale of aggregation and configuration of the zoning system [@ClarkAvery].
+Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena [@Openshaw]. Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results to the definition of units for which data are collected." According to the literature, the MAUP constrains the reliability of analyses for aggregated spatial data, as findings have shown varying results with the scale of aggregation and configuration of zoning systems [@ClarkAvery].
 
-<!-- nature of MAUP - aggregation problem/zoning problem -->
+<!-- zoning problem + examples -->
 
-Highly problematic to areal data, the modifiable unit problem (MAUP) describes the sensitivity of spatial analysis to the definition of 
+In practice, the MAUP is condensed into two issues which this paper will attempt to demonstrate in Section \ref{maup}. The first issue, described as the *scale problem*, is the variation in findings when data for zonal units are progressively aggregated. This has been demonstrated empirically by @YuleKendall who found correlations between what yields and potato yield 
+
+<!-- aggregation problem + examples -->
+
+The second issue, the *aggregation problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed when the scale or number of units are held constant [@Openshaw]. 
+
+<!-- ecological fallacy problem (tie back to two issues of MAUP)-->
+
 
 \subsection{Data}
 
@@ -30,6 +39,10 @@ OAdata$H_bad_Prop <- (OAdata$H_Vbad + OAdata$H_bad) / OAdata$pop
 model.1 <- lmer(unemp ~ S_Rent + dis_ind + Ethnic + (1|MSOA_CD), data = OAdata)
 summary(model.1)
 ```
+
+\section{MAUP Analysis}
+\label{maup}
+
 
 \section{Multilevel Modelling}
 
