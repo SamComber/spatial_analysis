@@ -1,0 +1,211 @@
+---
+title: "Using R for Multilevel Modelling (II)"
+author: "Guanpeng DONG"
+date: "21 January 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Learning Objectives
+
+* Implement Random Slope Multilevel Models in R
+* Analyse the ML model estimation results in R
+
+
+## Implementing MLM in R
+
+This tutorial will show how to use the `lme4` Package (short for linear mixed effect models) in R to fit random slope MLM and use the companion `merTools` Package to neatly analyse the model output from `lme4`. This tutorial will cover getting set up and running a few random slope multilevel models and interpret model estiamtion results. 
+
+We continue to use the census data in Liverpool to conduct an in-depth analysis on the health inequality. The aim is to build a multiple-scale spatial model to explain health inequality and identify spatially varying  relationships between health status and other socioeconomic factors in Liverpool.
+
+```{r warning=FALSE}
+library(rgdal)
+library(maptools)
+library(classInt)
+library(RColorBrewer)
+library(lme4)
+library(merTools)
+library(ggplot2)
+```
+
+Import the OA spatial data
+
+```{r}
+OA <- readOGR(dsn = ".", layer = "OA", stringsAsFactors = FALSE)
+head(OA@data)
+
+```
+
+We will only need the data slot of the spatial data OA to run models, so we extract the attribute data (variables) from the OA and name it `OAdata`.
+
+```{r}
+OAdata <- OA@data
+
+## To see the hierarchical data structure clearly, we sort the data by the MSOA code "MSOA_CD". Note, here we implicitly assume we have a two-level data structure with OAs nesting into MSOAs.
+# Sort a dataframe based on a column by using the `order` function from base R
+OAdata <- OAdata[order(OAdata$MSOA_CD),]
+head(OAdata)
+```
+
+
+### An initial investigation of varying relationships between health status and other variables
+
+```{r}
+## Create a variable presenting the proportions of people who reported bad health status by combining categories of Very Bad and Bad health statuses.
+OAdata$H_bad_Prop <- (OAdata$H_Vbad + OAdata$H_bad) / OAdata$pop
+
+# random select 20 MSOAs to show the relationship between reported health status and unemployment rates
+sample.20 <- sample(unique(OAdata$MSOA_CD), 20, replace = FALSE)
+
+ggplot(OAdata[OAdata$MSOA_CD %in% sample.20,], aes(x = unemp, y = H_bad_Prop)) + geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ MSOA_CD) +
+  xlab("Unemployment rates") + 
+  ylab("Percent bad health") +
+  theme_bw()
+```
+
+In this replication, the graph shows great variability of the associations between health status and unemployment rates across MSOAs, ranging from negative to positive associations. This provides motivation for us to use a random slope MLM.
+
+### Specifying and estimating a random slope MLM
+
+
+Again, we use the `lmer` function to estimate random slope MLM using a special syntax: `(1 + unemp |MSOA_CD)`, which tells `lmer` to fit a random slope multilevel model. That is, both the model intercept terms and the effect of unemployment rates on reported health status vary across MSOAs.
+
+The model specification is reiterated here with $i$ indexing OA units and $j$ MSOA units.
+
+**The OA level (or Micro-level) model is**,
+$$
+H\_bad\_Prop_{i,j} = \beta_{0,j} + \beta_1*age\_60_{i,j} + \beta_2*S\_Rent_{i,j} + \beta_{3,j}*unemp_{i,j} + \epsilon_{i,j}
+$$
+
+**The MSOA level (or Macro-level) model is**,
+$$
+\begin{aligned}
+\beta_{0,j} &= \beta_{0}  + \mu_{0,j} \\
+\beta_{3,j} &= \beta_{3}  + \mu_{3,j}
+\end{aligned}
+$$
+ 
+which gives the **combined model**,
+$$
+H\_bad\_Prop_{i,j} = \beta_{0} + \beta_1*age\_60_{i,j} + \beta_2*S\_Rent_{i,j} + \beta_3*unemp_{i,j} + \mu_{0,j} + \mu_{3,j}*unemp_{i,j} + \epsilon_{i,j}
+$$
+
+
+```{r}
+
+model.0 <- lmer(H_bad_Prop ~ age_60 + S_Rent + unemp + (1 + unemp|MSOA_CD), data = OAdata)
+summary(model.0)
+
+```
+
+**Task**
+
+* Interpret the regression coefficients 
+* Get the covariance or correlation matrix between the random intercepts and random slopes of unemployment rates
+
+
+Visualise the group-level random effects including the random intercept term and the randomn slopes.
+
+First, extract the random effect estimates,
+
+```{r}
+MSOA_re <- REsim(model.0)
+MSOA_re
+str(MSOA_re)
+```
+
+Then, create a caterpillar graph to visualise the mean (or median) of each MSOA random effect and the associated 95% confidence interval.
+
+```{r}
+p <- plotREsim(MSOA_re)
+p
+```
+
+Looking at the graph, there are several very interesting findings worth mentioning. First, the random intercepts don't seem to differentiate significantly with each other as their 95% confidence intervals overlap with each other. Second, the effects of unemployment on health status vary significantly across MSOAs: positive effects are observed in some MSOAs while negative effects in some MSOAS. Third, it seems that the significant differences in health status between MSOAs observed in the random intercept MLM might be due to the fact that the model doesn't capture the spatially varying effects of unemployment on health.
+
+
+Again, we can map these model-based random effect estimates by linking them to the MSOA shapefile using the `merge` function.
+
+```{r}
+## Import the MSOA spatial data
+MSOA <- readOGR(dsn = ".", layer = "MSOA", stringsAsFactors = FALSE)
+
+## We first create a new dataframe including random intercepts and slopes estimates from the MSOA_re object.
+MSOA_code <- MSOA_re[MSOA_re$term == "(Intercept)","groupID"]
+MSOA_intercept <- MSOA_re[MSOA_re$term == "(Intercept)","mean"]
+MSOA_slope <- MSOA_re[MSOA_re$term == "unemp","mean"]
+MSOA_link <- data.frame(MSOA_code, MSOA_intercept, MSOA_slope)
+MSOA_link$MSOA_code <- as.character(MSOA_link$MSOA_code )
+str(MSOA_link)
+MSOA@data <- merge(MSOA@data, MSOA_link, by.x = "MSOA_CD", by.y = "MSOA_code", all.x = TRUE)
+head(MSOA@data)
+```
+
+
+Then, use the `spplot` function to map the random effect estimates.    
+**The pattern of random intercepts at the MSOA scale**:
+
+```{r}
+temp <- MSOA@data$MSOA_intercept
+brks.temp <- classIntervals(temp, n = 5, style = "quantile")
+brks.temp <- round(brks.temp$brks, digits = 2)
+brks.temp[1] <- brks.temp[1] - 0.01
+brks.temp[5 + 1] <- brks.temp[5 + 1] + 0.01
+
+# Scale bar and legend
+xx <- MSOA@bbox
+
+scalebar <- list("SpatialPolygonsRescale", layout.scale.bar(),
+            offset = c(min(xx[1,] + 1000),xx[2,1] + 1000), scale = 5000,    fill=c("transparent","black"))
+
+text1 <- list("sp.text", c(min(xx[1,]) + 1000,xx[2,1] + 1500), "0")
+text2 <- list("sp.text", c(min(xx[1,]) + 6000,xx[2,1] + 1500), "5 km")
+northarrow <- list("SpatialPolygonsRescale", layout.north.arrow(),
+                     offset = c(min(xx[1,]) + 2000,xx[2,1] + 2000), scale = 1500)
+
+## Plot
+spplot(MSOA, "MSOA_intercept", sp.layout=list(scalebar,text1,text2,northarrow),
+        at = brks.temp, col.regions = brewer.pal(5, "YlOrRd"),
+        col="transparent",pretty=TRUE,
+        colorkey=list(labels=list(at=brks.temp)))
+```
+
+
+Then, use the `spplot` function to map the random effect estimates.    
+**The pattern of random slopes at the MSOA scale**:
+
+```{r}
+temp <- MSOA@data$MSOA_slope
+brks.temp <- classIntervals(temp, n = 5, style = "quantile")
+brks.temp <- round(brks.temp$brks, digits = 2)
+brks.temp[1] <- brks.temp[1] - 0.01
+brks.temp[5 + 1] <- brks.temp[5 + 1] + 0.01
+
+# Scale bar and legend
+xx <- MSOA@bbox
+
+scalebar <- list("SpatialPolygonsRescale", layout.scale.bar(),
+            offset = c(min(xx[1,] + 1000),xx[2,1] + 1000), scale = 5000,    fill=c("transparent","black"))
+
+text1 <- list("sp.text", c(min(xx[1,]) + 1000,xx[2,1] + 1500), "0")
+text2 <- list("sp.text", c(min(xx[1,]) + 6000,xx[2,1] + 1500), "5 km")
+northarrow <- list("SpatialPolygonsRescale", layout.north.arrow(),
+                     offset = c(min(xx[1,]) + 2000,xx[2,1] + 2000), scale = 1500)
+
+## Plot
+spplot(MSOA, "MSOA_slope", sp.layout=list(scalebar,text1,text2,northarrow),
+        at = brks.temp, col.regions = brewer.pal(5, "YlOrRd"),
+        col="transparent",pretty=TRUE,
+        colorkey=list(labels=list(at=brks.temp)))
+```
+
+
+**Task**
+
+* Can you make sense of the spatial patterns?
+* Explore whether the relatonships between health status and other predictor variables vary significantly across MSOAs

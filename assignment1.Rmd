@@ -1,0 +1,28 @@
+---
+title: "Assignment Two: The MAUP and Multilevel Modelling"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+---
+
+\section{Demonstrating the MAUP}
+
+\subsection{Background}
+
+The modifiable unit problem (MAUP)
+
+\subsection{Data}
+
+```{r, eval=FALSE}
+# fit random intercept model - i.e. model intercept term which varies across MSOAs
+OAdata$H_bad_Prop <- (OAdata$H_Vbad + OAdata$H_bad) / OAdata$pop
+
+model.1 <- lmer(unemp ~ S_Rent + dis_ind + Ethnic + (1|MSOA_CD), data = OAdata)
+summary(model.1)
+
+```
+
+\section{Multilevel Modelling}
+
+\subsection{Interpretation}
