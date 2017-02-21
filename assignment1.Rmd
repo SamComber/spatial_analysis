@@ -4,15 +4,26 @@ output:
   pdf_document:
     toc: true
     number_sections: true
+bibliography: references.bib
 ---
 
 \section{Demonstrating the MAUP}
 
 \subsection{Background}
 
-The modifiable unit problem (MAUP)
+<!-- introduce problem -->
+
+Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena [@Openshaw]. Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results tot he definition of units for which data are collected." The MAUP constraint 
+
+<!-- nature of MAUP -->
+
+Highly problematic to areal data, the modifiable unit problem (MAUP) describes the sensitivity of spatial analysis to the definition of 
+
+<!-- previous studies -->
 
 \subsection{Data}
+
+To demonstrate the MAUP issue, we analyse the correlation between property price data derived from Land Registry [@LandRegistry]
 
 ```{r, eval=FALSE}
 # fit random intercept model - i.e. model intercept term which varies across MSOAs
@@ -20,9 +31,10 @@ OAdata$H_bad_Prop <- (OAdata$H_Vbad + OAdata$H_bad) / OAdata$pop
 
 model.1 <- lmer(unemp ~ S_Rent + dis_ind + Ethnic + (1|MSOA_CD), data = OAdata)
 summary(model.1)
-
 ```
 
 \section{Multilevel Modelling}
 
 \subsection{Interpretation}
+
+\section{Bibliography}
