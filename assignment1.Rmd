@@ -13,13 +13,11 @@ bibliography: references.bib
 
 <!-- introduce problem -->
 
-Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena [@Openshaw]. Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results tot he definition of units for which data are collected." The MAUP constraint 
+Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena [@Openshaw]. Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results to the definition of units for which data are collected." According to the literature, the MAUP constrains the reliability of analyses for aggregated spatial data, as findings have shown varying results with the scale of aggregation and configuration of the zoning system [@ClarkAvery].
 
-<!-- nature of MAUP -->
+<!-- nature of MAUP - aggregation problem/zoning problem -->
 
 Highly problematic to areal data, the modifiable unit problem (MAUP) describes the sensitivity of spatial analysis to the definition of 
-
-<!-- previous studies -->
 
 \subsection{Data}
 
