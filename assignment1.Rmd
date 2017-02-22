@@ -29,16 +29,11 @@ The second issue, the *zoning problem*, pertains to the variation in findings wh
 
 \subsubsection{Data}
 
-To demonstrate the MAUP issue, we analyse the correlation between property price data derived from Land Registry [@LandRegistry]
+To demonstrate the scaling and zoning sensitivities of the MAUP, we calculate the bivariate strength of association between two open data variables. For our first variable, *crime_count*, we submit a HTTP request using the POST verb to send a custom polygon for retrieving all street-level crimes occuring in 2012. Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets containing timestamps relating to Twitter postings within the municipality of Liverpool for 2012\footnote{This dataset was data mined by Guy Lansley from UCL, and processed by Dani Arribas-Bel.}.
 
 \subsubsection{MAUP findings}
 
-
-** FIND WAY TO CONSTRUCT RANDOM AGGREGATION PROCESS FROM LSOA **
-
-** CORRELATION MAPS **
-
-** REGRESSION PLOTS **
+** CORR MAP **
 
 \section{Multilevel Modelling}
 
