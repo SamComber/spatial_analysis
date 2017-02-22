@@ -18,29 +18,20 @@ header-includes:
 Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena [@Openshaw]. Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results to the definition of units for which data are collected." According to the literature, the MAUP constrains the reliability of analyses for aggregated spatial data, as findings have shown varying results with the scale of aggregation and configuration of zoning systems [@ClarkAvery].
 
 <!-- zoning problem + examples -->
-
-In practice, the MAUP is condensed into two issues of possible scale and zoning sensitivity in model calibration which this paper will attempt to demonstrate in Section \ref{maup}. The first issue, described as the *scale problem*, is the variation in findings when data for zonal units are progressively aggregated. 
-
-** EXPLAIN HOW MIGHT CHANGE CORRELATON COEFFICIENTS FROM FOTHERINGHAM (1991)  PUT IN EXAMPLES THEN STATE WHAT YOU WILL DO**
-
-This has been demonstrated empirically by @YuleKendall who found correlations between what yields and potato yield 
-
-
-
-
 <!-- aggregation problem + examples -->
 
-The second issue, the *zoning problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed when the scale or number of units are held constant [@Openshaw]. 
+In practice, the MAUP is condensed into two issues of scale and zoning sensitivity which this paper will attempt to demonstrate in Section \ref{maup}. The first issue, described as the *scale problem*, is the variation in findings when data for zonal units are progressively aggregated. This has been demonstrated empirically by @ClarkAvery who found that whilst correlation coefficients did not increase monotonically with aggregation\footnote{At higher levels of aggregation, there is smaller adjacency of zonal units meaning groupings are more heterogenous leading to lower correlation coefficients.}, a general increase in data aggregation corresponds to an increase in correlation coefficients. 
 
-<!-- ecological fallacy problem (tie back to two issues of MAUP)-->
+The second issue, the *zoning problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed with the scale or number of units held constant [@Openshaw]. Zoning sensitivity in multivariate analysis has been demonstrated empirically in @FotheringhamWong who simulated the aggregation of 871 block groups into 218 zones in 150 different iterations. They highlight the severity of the zoning problem by demonstrating the possibility of concluding with one iteration of zones no association between the percentage of blue-collar workers and mean family income, with another iteration finding a unit increase in blue-collar worker percentages as reducing mean family income by \$20,000. In all, ignoring scale and zoning sensitivity in model calibration can lead to inferential conclusions that a researcher's areal data is applicable to the constituents who form the zones under study - the ecological fallacy problem [@Openshaw].
 
+\subsection{MAUP analysis}
+\label{maup}
 
-\subsection{Data}
+\subsubsection{Data}
 
 To demonstrate the MAUP issue, we analyse the correlation between property price data derived from Land Registry [@LandRegistry]
 
-\section{MAUP Analysis}
-\label{maup}
+\subsubsection{MAUP findings}
 
 
 ** FIND WAY TO CONSTRUCT RANDOM AGGREGATION PROCESS FROM LSOA **
