@@ -19,11 +19,18 @@ Areal units in zoning systems amalgamate into objects that constitute the basic 
 
 <!-- zoning problem + examples -->
 
-In practice, the MAUP is condensed into two issues which this paper will attempt to demonstrate in Section \ref{maup}. The first issue, described as the *scale problem*, is the variation in findings when data for zonal units are progressively aggregated. This has been demonstrated empirically by @YuleKendall who found correlations between what yields and potato yield 
+In practice, the MAUP is condensed into two issues of possible scale and zoning sensitivity in model calibration which this paper will attempt to demonstrate in Section \ref{maup}. The first issue, described as the *scale problem*, is the variation in findings when data for zonal units are progressively aggregated. 
+
+** EXPLAIN HOW MIGHT CHANGE CORRELATON COEFFICIENTS FROM FOTHERINGHAM (1991)  PUT IN EXAMPLES THEN STATE WHAT YOU WILL DO**
+
+This has been demonstrated empirically by @YuleKendall who found correlations between what yields and potato yield 
+
+
+
 
 <!-- aggregation problem + examples -->
 
-The second issue, the *aggregation problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed when the scale or number of units are held constant [@Openshaw]. 
+The second issue, the *zoning problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed when the scale or number of units are held constant [@Openshaw]. 
 
 <!-- ecological fallacy problem (tie back to two issues of MAUP)-->
 
@@ -32,17 +39,15 @@ The second issue, the *aggregation problem*, pertains to the variation in findin
 
 To demonstrate the MAUP issue, we analyse the correlation between property price data derived from Land Registry [@LandRegistry]
 
-```{r, eval=FALSE}
-# fit random intercept model - i.e. model intercept term which varies across MSOAs
-OAdata$H_bad_Prop <- (OAdata$H_Vbad + OAdata$H_bad) / OAdata$pop
-
-model.1 <- lmer(unemp ~ S_Rent + dis_ind + Ethnic + (1|MSOA_CD), data = OAdata)
-summary(model.1)
-```
-
 \section{MAUP Analysis}
 \label{maup}
 
+
+** FIND WAY TO CONSTRUCT RANDOM AGGREGATION PROCESS FROM LSOA **
+
+** CORRELATION MAPS **
+
+** REGRESSION PLOTS **
 
 \section{Multilevel Modelling}
 
