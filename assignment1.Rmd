@@ -35,6 +35,10 @@ To demonstrate the scaling and zoning sensitivities of the MAUP, we calculate th
 library(downloader)
 library(rgdal)
 library(httr)
+library(ggplot2)
+library(ggmap)
+library(sp)
+library(maptools)
 ```
 
 ```{r crime_data, eval=FALSE}
@@ -52,7 +56,8 @@ curl.string <- paste0('poly=',paste0(sprintf('%s,%s',lpool[,2], lpool[,1])
 # build dates list for loop 
 dates = c("2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06",
           "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12")
-dates = c("2012-01")
+
+# dates = c("2012-01", "2012-02")
 
 document <- lapply(dates, function(month) {
   # format acceptable packet for http request
@@ -64,8 +69,10 @@ document <- lapply(dates, function(month) {
   # return as data.frame
   jsonlite::fromJSON(txt=json)
 })
+```
 
-  # build master data.frame to append data.frame for individual months to
+```{r hidden_render, eval=FALSE}
+# build master data.frame to append data.frame for individual months to
 master <- data.frame(id=numeric(0), category=character(0), lat=character(0),
                      lon=character(0), month=character(0), outcome_status=character(0))
 
@@ -89,28 +96,28 @@ d4 <- data.frame(category=document[[4]]$category,lat=document[[4]]$location$lati
                  name=document[[4]]$location$street$name, month=document[[4]]$month,
                  outcome_status=document[[4]]$outcome_status$category)
 
-d5 <- data.frame(category=document[[5]]$category,lat=document[[5]]$location$latitude, 
-                 lon=document[[5]]$location$longitude, id=document[[5]]$id, 
+d5 <- data.frame(category=document[[5]]$category,lat=document[[5]]$location$latitude,
+                 lon=document[[5]]$location$longitude, id=document[[5]]$id,
                  name=document[[5]]$location$street$name, month=document[[5]]$month,
                  outcome_status=document[[5]]$outcome_status$category)
 
 d6 <- data.frame(category=document[[6]]$category,lat=document[[6]]$location$latitude,
-                 lon=document[[6]]$location$longitude, id=document[[6]]$id, 
+                 lon=document[[6]]$location$longitude, id=document[[6]]$id,
                  name=document[[6]]$location$street$name, month=document[[6]]$month,
                  outcome_status=document[[6]]$outcome_status$category)
 
-d7 <- data.frame(category=document[[7]]$category,lat=document[[7]]$location$latitude, 
-                 lon=document[[7]]$location$longitude, id=document[[7]]$id, 
+d7 <- data.frame(category=document[[7]]$category,lat=document[[7]]$location$latitude,
+                 lon=document[[7]]$location$longitude, id=document[[7]]$id,
                  name=document[[7]]$location$street$name, month=document[[7]]$month,
                  outcome_status=document[[7]]$outcome_status$category)
 
-d8 <- data.frame(category=document[[8]]$category,lat=document[[8]]$location$latitude, 
-                 lon=document[[8]]$location$longitude, id=document[[8]]$id, 
+d8 <- data.frame(category=document[[8]]$category,lat=document[[8]]$location$latitude,
+                 lon=document[[8]]$location$longitude, id=document[[8]]$id,
                  name=document[[8]]$location$street$name, month=document[[8]]$month,
                  outcome_status=document[[8]]$outcome_status$category)
 
 d9 <- data.frame(category=document[[9]]$category,lat=document[[9]]$location$latitude,
-                 lon=document[[9]]$location$longitude, id=document[[9]]$id, 
+                 lon=document[[9]]$location$longitude, id=document[[9]]$id,
                  name=document[[9]]$location$street$name, month=document[[9]]$month,
                  outcome_status=document[[9]]$outcome_status$category)
 
@@ -120,24 +127,47 @@ d10 <- data.frame(category=document[[10]]$category,lat=document[[10]]$location$l
                   outcome_status=document[[10]]$outcome_status$category)
 
 d11 <- data.frame(category=document[[11]]$category,lat=document[[11]]$location$latitude,
-                  lon=document[[11]]$location$longitude, id=document[[11]]$id, 
+                  lon=document[[11]]$location$longitude, id=document[[11]]$id,
                   name=document[[11]]$location$street$name, month=document[[11]]$month,
                   outcome_status=document[[11]]$outcome_status$category)
 
 d12 <- data.frame(category=document[[12]]$category,lat=document[[12]]$location$latitude,
-                  lon=document[[12]]$location$longitude, id=document[[12]]$id, 
+                  lon=document[[12]]$location$longitude, id=document[[12]]$id,
                   name=document[[12]]$location$street$name, month=document[[12]]$month,
                   outcome_status=document[[12]]$outcome_status$category)
 
 # rbind each month to master data.frame
 document <- rbind(master, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12)
+# document <- rbind(master, d1, d2)
+
+# take a sample from population
+document <- document[sample(nrow(document), 45000),]
+# convert factors to chr class
+document <- rapply(document, as.character, classes="factor", how="replace")
+```
+
+```{r, eval=FALSE}
+# cast lat/lon columns to numeric data type
+document$lat <- as.numeric(document$lat)
+document$lon <- as.numeric(document$lon)
+
+# convert data.frame to shapefile in rgdal
+coordinates(document) <- ~lon+lat
+proj4string(document) <- CRS("+init=epsg:4326") # WGS 84
+
+# write once
+writeOGR(document, "/Users/samcomber/Documents/spatial_analysis/shp/crimes",
+         "crimes", driver = "ESRI Shapefile")
 ```
 
 Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets containing timestamps relating to Twitter postings within the municipality of Liverpool for 2012\footnote{This dataset was data mined by Guy Lansley from UCL, and processed by Dani Arribas-Bel.}.
 
 ```{r twitter_data, eval=FALSE}
 tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets", layer = "tweets_liverpool")
+tweets_sample <- as.data.frame(tweets[sample(nrow(tweets), 1000),])
 ```
+
+
 
 \subsubsection{MAUP findings}
 
@@ -148,3 +178,5 @@ tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets"
 \subsection{Interpretation}
 
 \section{Bibliography}
+
+\section{Appendix}
