@@ -29,7 +29,49 @@ The second issue, the *zoning problem*, pertains to the variation in findings wh
 
 \subsubsection{Data}
 
-To demonstrate the scaling and zoning sensitivities of the MAUP, we calculate the bivariate strength of association between two open data variables. For our first variable, *crime_count*, we submit a HTTP request using the POST verb to send a custom polygon for retrieving all street-level crimes occuring in 2012. Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets containing timestamps relating to Twitter postings within the municipality of Liverpool for 2012\footnote{This dataset was data mined by Guy Lansley from UCL, and processed by Dani Arribas-Bel.}.
+To demonstrate the scaling and zoning sensitivities of the MAUP, we calculate the bivariate strength of association between two open data variables. For our first variable, *crime_count*, we submit a HTTP request using the POST verb to send a custom polygon for retrieving all street-level crimes occuring in 2012. 
+
+```{r dependencies, include=FALSE}
+library(downloader)
+library(rgdal)
+library(httr)
+```
+
+```{r crime_data, eval=FALSE}
+# download geojson
+u <- "http://statistics.data.gov.uk/boundaries/E08000012.json"
+# store in temporary directory 
+downloader::download(url = u, destfile = "/tmp/lpool.geojson")
+lpool <- readOGR(dsn = "/tmp/lpool.geojson", layer = "OGRGeoJSON")
+# access coords slot
+lpool <- lpool@polygons[[1]]@Polygons[[1]]@coords
+# build lat/lon + date string to send with postrequest
+curl.string <- paste0('poly=',paste0(sprintf('%s,%s',lpool[,2], lpool[,1])
+                                     , collapse = ':'))
+
+# build dates list for loop 
+dates = c("2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06",
+          "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12")
+dates = c("2012-01")
+
+document <- lapply(dates, function(month) {
+  # format acceptable packet for http request
+  curl.string <- list(poly=c(curl.string), date=c(month))
+  # post custom polygon to police api 
+  r <- httr::POST("https://data.police.uk/api/crimes-street/all-crime", 
+                  body = curl.string, encode="multipart", verbose())
+  json <- content(r, "text", encoding = "ISO-8859-1")
+  # return as data.frame
+  jsonlite::fromJSON(txt=json)
+})
+
+```
+
+Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets containing timestamps relating to Twitter postings within the municipality of Liverpool for 2012\footnote{This dataset was data mined by Guy Lansley from UCL, and processed by Dani Arribas-Bel.}.
+
+```{r twitter_data}
+tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets", layer = "tweets_liverpool")
+```
 
 \subsubsection{MAUP findings}
 
