@@ -71,7 +71,7 @@ document <- lapply(dates, function(month) {
 })
 ```
 
-```{r hidden_render, eval=FALSE}
+```{r hidden_render, eval=FALSE, include=FALSE}
 # build master data.frame to append data.frame for individual months to
 master <- data.frame(id=numeric(0), category=character(0), lat=character(0),
                      lon=character(0), month=character(0), outcome_status=character(0))
@@ -167,11 +167,11 @@ tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets"
 tweets_sample <- as.data.frame(tweets[sample(nrow(tweets), 1000),])
 ```
 
-
+To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. Specifically, we investigate the scaling problem using a hex binned lattice which **. Finally, we demonstrate the zoning problem by constraining cardinality - i.e. the number of regions in the polygon shapefile - to 100 regions, but generating 200 iterations of randomly .
 
 \subsubsection{MAUP findings}
 
-** CORR MAP **
+** CORR TABLE **
 
 \section{Multilevel Modelling}
 
