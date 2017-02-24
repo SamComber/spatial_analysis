@@ -175,7 +175,12 @@ To demonstrate the MAUP, we aggregate a count of each crime and tweet into separ
 
 \section{Multilevel Modelling}
 
+In this section, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the levels.
+
 \subsection{Model specification}
+
+
+
 \subsection{Analysis}
 \subsection{Interpretation}
 
