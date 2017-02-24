@@ -175,6 +175,8 @@ tweets_sample <- as.data.frame(tweets[sample(nrow(tweets), 1000),])
 
 \section{Multilevel Modelling}
 
+\subsection{Model specification}
+\subsection{Analysis}
 \subsection{Interpretation}
 
 \section{Bibliography}
