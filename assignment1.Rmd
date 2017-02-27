@@ -62,8 +62,6 @@ curl.string <- paste0('poly=',paste0(sprintf('%s,%s',lpool[,2], lpool[,1])
 dates = c("2012-01", "2012-02", "2012-03", "2012-04", "2012-05", "2012-06",
           "2012-07", "2012-08", "2012-09", "2012-10", "2012-11", "2012-12")
 
-# dates = c("2012-01", "2012-02")
-
 document <- lapply(dates, function(month) {
   # format acceptable packet for http request
   curl.string <- list(poly=c(curl.string), date=c(month))
@@ -163,20 +161,34 @@ proj4string(document) <- CRS("+init=epsg:4326") # WGS 84
 # write once
 writeOGR(document, "/Users/samcomber/Documents/spatial_analysis/shp/crimes",
          "crimes", driver = "ESRI Shapefile")
+
+crimes <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/crimes",
+                  layer = "crimes")
 ```
 
 Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets containing timestamps relating to Twitter postings within the municipality of Liverpool for 2012\footnote{This dataset was data mined by Guy Lansley from UCL, and processed by Dani Arribas-Bel.}.
 
 ```{r twitter_data, eval=FALSE}
-tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets", layer = "tweets_liverpool")
-tweets_sample <- as.data.frame(tweets[sample(nrow(tweets), 1000),])
+tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets",
+                  layer = "tweets_liverpool")
 ```
 
 To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. Specifically, we investigate the scaling problem using a hex binned lattice which **. Finally, we demonstrate the zoning problem by constraining cardinality - i.e. the number of regions in the polygon shapefile - to 100 regions, but generating 200 iterations of randomly .
 
 \subsubsection{MAUP findings}
 
-** CORR TABLE **
+<!-- SCALE PROBLEM -->
+
+```{r, eval=FALSE}
+plot(crimes)
+plot(tweets, add = TRUE, col = "red")
+```
+
+<!-- ZONING PROBLEM -->
+
+```{r, eval=FALSE}
+
+```
 
 \section{Multilevel Modelling}
 
@@ -189,23 +201,32 @@ In this section, we implement a two-level multilevel model that accounts for spa
 ```{r, eval=FALSE}
 # msoa and lsoa geographies were joined by location in QGIS
 # as R lacks any robust library for polygon.in.polygon joins
-lsoa.join <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/
-                     spatial_join", layer = "lsoa_join", stringsAsFactors = FALSE)
+lsoa.join <- readOGR(dsn = 
+                     "/Users/samcomber/Documents/spatial_analysis/shp/spatial_join",
+                     layer = "lsoa_join", stringsAsFactors = FALSE)
 
-# LR data to spatial points df
-lr <- read.csv("/Users/samcomber/Documents/spatial_analysis/data/lpool_pp.csv", stringsAsFactors = FALSE)
+# save location to tmp folder
+temp <- "/tmp/lpool_pp.csv"
+
+download.file(paste0("http://landregistry.data.gov.uk/app/ppd/ppd_data.csv?et%5B%5D=lrcommon%3Afreehold&et%5B%5D=lrcommon%3Aleasehold&header=true&limit=all&max_date=31+December+2016&min_date=1+January+2016&nb%5B%5D=true&nb%5B%5D=false&ptype%5B%5D=lrcommon%3Adetached&ptype%5B%5D=lrcommon%3Asemi-detached&ptype%5B%5D=lrcommon%3Aterraced&ptype%5B%5D=lrcommon%3Aflat-maisonette&ptype%5B%5D=lrcommon%3AotherPropertyType&tc%5B%5D=ppd%3AstandardPricePaidTransaction&tc%5B%5D=ppd%3AadditionalPricePaidTransaction&town=","Liverpool"), temp)
+
+# load LR data
+lr <- read.csv("/tmp/lpool_pp.csv",
+               stringsAsFactors = FALSE)
 
 # select only relevant columns
-lr <- dplyr::select(lr, price_paid, property_type, new_build, saon, paon, street, locality, town, postcode)
+lr <- dplyr::select(lr, price_paid, property_type, new_build, saon, paon, street,
+                    locality, town, postcode)
 
 # add concatenated column for geocoding
 lr.geocode <- mutate(lr, address = paste(saon, paon, street, locality, town, postcode))
 
 # drop previous columns
-lr.geocode <- dplyr::select(lr.geocode, -saon, -paon, -street, -locality, -town, -postcode)
+lr.geocode <- dplyr::select(lr.geocode, -saon, -paon, -street, 
+                            -locality, -town, -postcode)
 
-# take sample to prevent API query limit from Google
-lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 2000),]
+# take sample to prevent API query limit from Google (2,500)
+lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 2450),]
 
 # loop over address, get lat/lon
 geo.done <- data.frame()
@@ -215,12 +236,13 @@ for (i in 1:nrow(lr.geocode.sample)) {
   geo.done <- rbind(geo.done, g)
 }
 
-# export to csv for 
-write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/geocoded_lr.csv", row.names=FALSE)
+# export to csv for backup
+write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
+          geocoded_lr.csv", row.names=FALSE)
+
+# convert to spatial points df
 
 ```
-
-** lsoa and oa group variables **
 
 ** avg housing price over areal unit **
 
@@ -232,5 +254,4 @@ $$ Price_{i,j} = \beta $$
 \subsection{Interpretation}
 
 \section{Bibliography}
-
 \section{Appendix}
