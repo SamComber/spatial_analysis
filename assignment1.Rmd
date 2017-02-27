@@ -39,6 +39,10 @@ library(ggplot2)
 library(ggmap)
 library(sp)
 library(maptools)
+library(classInt)
+library(RColorBrewer)
+library(lme4)
+library(merTools)
 ```
 
 ```{r crime_data, eval=FALSE}
@@ -179,7 +183,21 @@ In this section, we implement a two-level multilevel model that accounts for spa
 
 \subsection{Model specification}
 
+<!-- variables decision -->
 
+```{r}
+# load both shapefiles
+lsoa <- readOGR(dsn = "", layer = "", stringsAsFactors = FALSE)
+
+# average LR price paid by lsoa
+
+```
+
+** lsoa and oa group variables **
+
+** avg housing price over areal unit **
+
+<!-- model specification(s) -->
 
 \subsection{Analysis}
 \subsection{Interpretation}
