@@ -188,6 +188,10 @@ plot(tweets, add = TRUE, col = "red")
 
 ```{r, eval=FALSE}
 
+hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis", layer = "hex_test")
+IDS <- hex$z010_i01_Z
+
+new <- unionSpatialPolygons(hex, IDS)
 ```
 
 \section{Multilevel Modelling}
