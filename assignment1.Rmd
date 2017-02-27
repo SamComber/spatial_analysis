@@ -173,7 +173,9 @@ tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets"
                   layer = "tweets_liverpool")
 ```
 
-To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. Specifically, we investigate the scaling problem using a hex binned lattice which **. Finally, we demonstrate the zoning problem by constraining cardinality - i.e. the number of regions in the polygon shapefile - to 100 regions, but generating 200 iterations of randomly .
+To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. Specifically, we investigate the scaling problem using a hex binned lattice which **. Finally, we demonstrate the zoning problem by constraining cardinality - i.e. the number of regions per shapefile - to 100. We generate 10 iterations of 100 regions using Openshaw's depth-first algorithm\footnote{A visualisation of the contiguity graph is showed below.} in IMAGE studio [@Kostas]. 
+
+![My Figure](TEST.jpg)
 
 \subsubsection{MAUP findings}
 
@@ -192,6 +194,8 @@ hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis", layer = "hex
 IDS <- hex$z010_i01_Z
 
 new <- unionSpatialPolygons(hex, IDS)
+
+hex_new <- over(crimes, new)
 ```
 
 \section{Multilevel Modelling}
@@ -212,7 +216,17 @@ lsoa.join <- readOGR(dsn =
 # save location to tmp folder
 temp <- "/tmp/lpool_pp.csv"
 
-download.file(paste0("http://landregistry.data.gov.uk/app/ppd/ppd_data.csv?et%5B%5D=lrcommon%3Afreehold&et%5B%5D=lrcommon%3Aleasehold&header=true&limit=all&max_date=31+December+2016&min_date=1+January+2016&nb%5B%5D=true&nb%5B%5D=false&ptype%5B%5D=lrcommon%3Adetached&ptype%5B%5D=lrcommon%3Asemi-detached&ptype%5B%5D=lrcommon%3Aterraced&ptype%5B%5D=lrcommon%3Aflat-maisonette&ptype%5B%5D=lrcommon%3AotherPropertyType&tc%5B%5D=ppd%3AstandardPricePaidTransaction&tc%5B%5D=ppd%3AadditionalPricePaidTransaction&town=","Liverpool"), temp)
+# download from source
+download.file(paste0("http://landregistry.data.gov.uk/app/ppd/ppd_data.csv
+                     ?et%5B%5D=lrcommon%3Afreehold&et%5B%5D=lrcommon%3Aleasehold
+                     &header=true&limit=all&max_date=31+December+2016
+                     &min_date=1+January+2016&nb%5B%5D=true&nb%5B%5D=false
+                     &ptype%5B%5D=lrcommon%3Adetached&ptype%5B%5D=lrcommon%3Asemi-detached
+                     &ptype%5B%5D=lrcommon%3Aterraced&ptype%5B%5D=lrcommon%
+                     3Aflat-maisonette&ptype%5B%5D=lrcommon%3AotherPropertyType
+                     &tc%5B%5D=ppd%3AstandardPricePaidTransaction
+                     &tc%5B%5D=ppd%3AadditionalPricePaidTransaction&town=",
+                     "Liverpool"), temp)
 
 # load LR data
 lr <- read.csv("/tmp/lpool_pp.csv",
@@ -245,7 +259,6 @@ write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
           geocoded_lr.csv", row.names=FALSE)
 
 # convert to spatial points df
-
 ```
 
 ** avg housing price over areal unit **
