@@ -43,6 +43,7 @@ library(classInt)
 library(RColorBrewer)
 library(lme4)
 library(merTools)
+library(dplyr)
 ```
 
 ```{r crime_data, eval=FALSE}
@@ -185,11 +186,37 @@ In this section, we implement a two-level multilevel model that accounts for spa
 
 <!-- variables decision -->
 
-```{r}
-# load both shapefiles
-lsoa <- readOGR(dsn = "", layer = "", stringsAsFactors = FALSE)
+```{r, eval=FALSE}
+# msoa and lsoa geographies were joined by location in QGIS
+# as R lacks any robust library for polygon.in.polygon joins
+lsoa.join <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/
+                     spatial_join", layer = "lsoa_join", stringsAsFactors = FALSE)
 
-# average LR price paid by lsoa
+# LR data to spatial points df
+lr <- read.csv("/Users/samcomber/Documents/spatial_analysis/data/lpool_pp.csv", stringsAsFactors = FALSE)
+
+# select only relevant columns
+lr <- dplyr::select(lr, price_paid, property_type, new_build, saon, paon, street, locality, town, postcode)
+
+# add concatenated column for geocoding
+lr.geocode <- mutate(lr, address = paste(saon, paon, street, locality, town, postcode))
+
+# drop previous columns
+lr.geocode <- dplyr::select(lr.geocode, -saon, -paon, -street, -locality, -town, -postcode)
+
+# take sample to prevent API query limit from Google
+lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 2000),]
+
+# loop over address, get lat/lon
+geo.done <- data.frame()
+for (i in 1:nrow(lr.geocode.sample)) {
+  g <- geocode(lr.geocode.sample$address[i])
+  g <- mutate(g, price=lr.geocode.sample$price_paid[i])
+  geo.done <- rbind(geo.done, g)
+}
+
+# export to csv for 
+write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/geocoded_lr.csv", row.names=FALSE)
 
 ```
 
@@ -198,6 +225,8 @@ lsoa <- readOGR(dsn = "", layer = "", stringsAsFactors = FALSE)
 ** avg housing price over areal unit **
 
 <!-- model specification(s) -->
+
+$$ Price_{i,j} = \beta $$
 
 \subsection{Analysis}
 \subsection{Interpretation}
