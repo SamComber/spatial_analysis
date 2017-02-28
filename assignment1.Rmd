@@ -183,20 +183,32 @@ To demonstrate the MAUP, we aggregate a count of each crime and tweet into separ
 <!-- SCALE PROBLEM -->
 
 ```{r, eval=FALSE}
+hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
+img <- read.csv("z010_i01.zon")
+
+# folder iterater here
+hex@data$id <- as.numeric(hex@data$id)
+hex@data <- left_join(hex@data, img, by = c("id"= "AreaID"))
+
+hex$ZoneID <- as.factor(hex$ZoneID)
+
+test <- gUnaryUnion(hex, hex@data$ZoneID)
+tess <- unionSpatialPolygons(hex, hex@data$ZoneID)
 
 
+plot(tess, )
 ```
+
+<!-- FACET_WRAP 4 PLOT WITH 10, 40, 70, 100 -->
+
+<!-- TABLE OF CORRELATION COEFFICIENTS -->
 
 <!-- ZONING PROBLEM -->
 
 ```{r, eval=FALSE}
-hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis", layer = "hex_test")
-
 # points in polygon spatial join
 pts.poly <- point.in.poly(crimes, hex)
 
-plot(tweets)
-plot(hex, add=TRUE)
 # aggregate crimes data
 pts.agg <- pts.poly@data %>% group_by(z010_i01_Z) %>% summarise(num = n()) %>% arrange(z010_i01_Z)
 
@@ -206,25 +218,29 @@ hex@data <- left_join(hex@data, pts.agg, by = c("z010_i01_Z" = "z010_i01_Z"))
 # test plot
 spplot(hex, "num", col="transparent", pretty=TRUE)
 
-# set working dir
-setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
-
 # loop over directory 
 folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
 
 # we have folders + file names and are in run1 directory
+setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
+
+master <- data.frame()
 for (folder in folders) {
   setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/",folder))
   files <- list.files(pattern = "*.zon")
 
   for (file in files) {
     t <- read.csv(file)
-    
-    # you want one big dataframe for each zon file
+    # out <- rbind(out, t)
+    print(class(t))
+    # for each file, we want a list in master list
+    out <- rbind(out, file)
+
+    break
   }
+  break
 }
 
-setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
 ```
 
 \section{Multilevel Modelling}
@@ -273,7 +289,7 @@ lr.geocode <- dplyr::select(lr.geocode, -saon, -paon, -street,
                             -locality, -town, -postcode)
 
 # take sample to prevent API query limit from Google (2,500)
-lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 5),]
+lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 2450),]
 
 # loop over address, get lat/lon
 geo.done <- data.frame()
@@ -289,9 +305,9 @@ write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
 
 # convert to spatial points df
 
-```
+# each property has an LSOA and an MSOA code, along with IMD info (POINT IN POLYGON)
 
-** avg housing price over areal unit **
+```
 
 <!-- model specification(s) -->
 
