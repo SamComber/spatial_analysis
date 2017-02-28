@@ -44,6 +44,7 @@ library(RColorBrewer)
 library(lme4)
 library(merTools)
 library(dplyr)
+library(spatialEco)
 ```
 
 ```{r crime_data, eval=FALSE}
@@ -173,29 +174,35 @@ tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets"
                   layer = "tweets_liverpool")
 ```
 
-To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. Specifically, we investigate the scaling problem using a hex binned lattice which **. Finally, we demonstrate the zoning problem by constraining cardinality - i.e. the number of regions per shapefile - to 100. We generate 10 iterations of 100 regions using Openshaw's depth-first algorithm\footnote{A visualisation of the contiguity graph is showed below.} in IMAGE studio [@Kostas]. 
+<!-- explain IMAGE a bit more -->
 
-![My Figure](TEST.jpg)
+To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. Specifically, we investigate the scaling problem using a hex binned lattice which **. Finally, we demonstrate the zoning problem by constraining cardinality - i.e. the number of regions per shapefile - to 100. We generate 10 iterations of 100 regions using Openshaw's depth-first algorithm\footnote{A visualisation of the contiguity graph is showed below.} in IMAGE studio [@Kostas]. 
 
 \subsubsection{MAUP findings}
 
 <!-- SCALE PROBLEM -->
 
 ```{r, eval=FALSE}
-plot(crimes)
-plot(tweets, add = TRUE, col = "red")
+
+
 ```
 
 <!-- ZONING PROBLEM -->
 
 ```{r, eval=FALSE}
-
 hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis", layer = "hex_test")
-IDS <- hex$z010_i01_Z
 
-new <- unionSpatialPolygons(hex, IDS)
+# points in polygon spatial join
+pts.poly <- point.in.poly(crimes, hex)
 
-hex_new <- over(crimes, new)
+# aggregate crimes data
+pts.agg <- pts.poly@data %>% group_by(z010_i01_Z) %>% summarise(num = n()) %>% arrange(z010_i01_Z)
+
+# join summed crimes back to data.frame
+hex@data <- left_join(hex@data, pts.agg, by = c("z010_i01_Z" = "z010_i01_Z"))
+
+# 
+spplot(hex, "num")
 ```
 
 \section{Multilevel Modelling}
@@ -259,6 +266,7 @@ write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
           geocoded_lr.csv", row.names=FALSE)
 
 # convert to spatial points df
+
 ```
 
 ** avg housing price over areal unit **
