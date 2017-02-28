@@ -195,14 +195,36 @@ hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis", layer = "hex
 # points in polygon spatial join
 pts.poly <- point.in.poly(crimes, hex)
 
+plot(tweets)
+plot(hex, add=TRUE)
 # aggregate crimes data
 pts.agg <- pts.poly@data %>% group_by(z010_i01_Z) %>% summarise(num = n()) %>% arrange(z010_i01_Z)
 
 # join summed crimes back to data.frame
 hex@data <- left_join(hex@data, pts.agg, by = c("z010_i01_Z" = "z010_i01_Z"))
 
-# 
-spplot(hex, "num")
+# test plot
+spplot(hex, "num", col="transparent", pretty=TRUE)
+
+# set working dir
+setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
+
+# loop over directory 
+folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
+
+# we have folders + file names and are in run1 directory
+for (folder in folders) {
+  setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/",folder))
+  files <- list.files(pattern = "*.zon")
+
+  for (file in files) {
+    t <- read.csv(file)
+    
+    # you want one big dataframe for each zon file
+  }
+}
+
+setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
 ```
 
 \section{Multilevel Modelling}
@@ -251,7 +273,7 @@ lr.geocode <- dplyr::select(lr.geocode, -saon, -paon, -street,
                             -locality, -town, -postcode)
 
 # take sample to prevent API query limit from Google (2,500)
-lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 2450),]
+lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 5),]
 
 # loop over address, get lat/lon
 geo.done <- data.frame()
