@@ -189,14 +189,12 @@ img <- read.csv("z010_i01.zon")
 # folder iterater here
 hex@data$id <- as.numeric(hex@data$id)
 hex@data <- left_join(hex@data, img, by = c("id"= "AreaID"))
-
 hex$ZoneID <- as.factor(hex$ZoneID)
 
-test <- gUnaryUnion(hex, hex@data$ZoneID)
-tess <- unionSpatialPolygons(hex, hex@data$ZoneID)
+hex@data <- hex@data[order(hex@data$id),]
 
 
-plot(tess, )
+
 ```
 
 <!-- FACET_WRAP 4 PLOT WITH 10, 40, 70, 100 -->
@@ -210,13 +208,19 @@ plot(tess, )
 pts.poly <- point.in.poly(crimes, hex)
 
 # aggregate crimes data
-pts.agg <- pts.poly@data %>% group_by(z010_i01_Z) %>% summarise(num = n()) %>% arrange(z010_i01_Z)
+pts.agg <- pts.poly@data %>% group_by(ZoneID) %>% summarise(num = n()) %>% arrange(ZoneID)
 
 # join summed crimes back to data.frame
-hex@data <- left_join(hex@data, pts.agg, by = c("z010_i01_Z" = "z010_i01_Z"))
+hex@data <- left_join(hex@data, pts.agg, by = c("ZoneID" = "ZoneID"))
 
 # test plot
 spplot(hex, "num", col="transparent", pretty=TRUE)
+
+
+
+
+
+
 
 # loop over directory 
 folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
