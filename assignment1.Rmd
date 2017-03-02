@@ -172,6 +172,10 @@ Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets
 ```{r twitter_data, eval=FALSE}
 tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets",
                   layer = "tweets_liverpool")
+
+proj4string(tweets) <- CRS("+proj=longlat +datum=WGS84")
+
+# make tweets shapefile from scratch
 ```
 
 <!-- explain IMAGE a bit more -->
@@ -187,31 +191,23 @@ To demonstrate the MAUP, we aggregate a count of each crime and tweet into separ
 hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
 
 # for each folder, get first zon file from each
-img <- read.csv("z010_i01.zon")
+img <- read.csv("z010_i04.zon")
 
 hex@data$id <- as.numeric(hex@data$id)
 hex@data <- left_join(hex@data, img, by = c("id"= "AreaID"))
 hex@data <- hex@data[order(hex@data$id),]
 
 tes <- unionSpatialPolygons(hex, hex@data$ZoneID)
-
-plot(tes)
 ```
 
-<!-- FACET_WRAP 4 PLOT WITH 10, 40, 70, 100 -->
-
-<!-- TABLE OF CORRELATION COEFFICIENTS -->
-
-<!-- ZONING PROBLEM -->
 
 ```{r, eval=FALSE}
-
+# convert spatial polygons to spatialpolygonsdataframe
 df <- data.frame(id = getSpPPolygonsIDSlots(tes))
 row.names(df) <- getSpPPolygonsIDSlots(tes)
 
+# problem = ids arent matching
 spdf <- SpatialPolygonsDataFrame(tes, data = df)
-
-plot(spdf)
 
 # points in polygon spatial join
 pts.poly <- point.in.poly(crimes, spdf)
@@ -228,11 +224,9 @@ hex@data <- left_join(hex@data, pts.agg, by = c("ZoneID" = "id.1"))
 # test plot
 spplot(hex, "num", col="transparent", pretty=TRUE)
 
+cor(hex@data$num, hex@data$id)
 
-
-
-
-
+pts.tweets <- point.in.poly(tweets, spdf)
 
 # loop over directory 
 folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
