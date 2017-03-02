@@ -183,18 +183,19 @@ To demonstrate the MAUP, we aggregate a count of each crime and tweet into separ
 <!-- SCALE PROBLEM -->
 
 ```{r, eval=FALSE}
+# base hex shapefile
 hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
+
+# for each folder, get first zon file from each
 img <- read.csv("z010_i01.zon")
 
-# folder iterater here
 hex@data$id <- as.numeric(hex@data$id)
 hex@data <- left_join(hex@data, img, by = c("id"= "AreaID"))
-hex$ZoneID <- as.factor(hex$ZoneID)
-
 hex@data <- hex@data[order(hex@data$id),]
 
+tes <- unionSpatialPolygons(hex, hex@data$ZoneID)
 
-
+plot(tes)
 ```
 
 <!-- FACET_WRAP 4 PLOT WITH 10, 40, 70, 100 -->
@@ -204,14 +205,25 @@ hex@data <- hex@data[order(hex@data$id),]
 <!-- ZONING PROBLEM -->
 
 ```{r, eval=FALSE}
+
+df <- data.frame(id = getSpPPolygonsIDSlots(tes))
+row.names(df) <- getSpPPolygonsIDSlots(tes)
+
+spdf <- SpatialPolygonsDataFrame(tes, data = df)
+
+plot(spdf)
+
 # points in polygon spatial join
-pts.poly <- point.in.poly(crimes, hex)
+pts.poly <- point.in.poly(crimes, spdf)
 
 # aggregate crimes data
-pts.agg <- pts.poly@data %>% group_by(ZoneID) %>% summarise(num = n()) %>% arrange(ZoneID)
+pts.agg <- pts.poly@data %>% group_by(id.1) %>% summarise(num = n()) %>% arrange(id.1)
+
+# cast as factor
+pts.agg$id.1 <- as.integer(pts.agg$id.1)
 
 # join summed crimes back to data.frame
-hex@data <- left_join(hex@data, pts.agg, by = c("ZoneID" = "ZoneID"))
+hex@data <- left_join(hex@data, pts.agg, by = c("ZoneID" = "id.1"))
 
 # test plot
 spplot(hex, "num", col="transparent", pretty=TRUE)
