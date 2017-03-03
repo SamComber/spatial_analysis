@@ -171,11 +171,7 @@ Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets
 
 ```{r twitter_data, eval=FALSE}
 tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets",
-                  layer = "tweets_liverpool")
-
-proj4string(tweets) <- CRS("+proj=longlat +datum=WGS84")
-
-# make tweets shapefile from scratch
+                  layer = "tweets_mersey")
 ```
 
 <!-- explain IMAGE a bit more -->
