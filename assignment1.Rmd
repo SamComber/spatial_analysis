@@ -172,6 +172,12 @@ Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets
 ```{r twitter_data, eval=FALSE}
 tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets",
                   layer = "tweets_mersey")
+
+# alternate x and y for correct aggregation (oops)
+lats <- tweets@coords[, 1]
+lon <- tweets@coords[, 2]
+tweets@coords[,1] <- lon
+tweets@coords[,2] <- lats
 ```
 
 <!-- explain IMAGE a bit more -->
@@ -183,47 +189,68 @@ To demonstrate the MAUP, we aggregate a count of each crime and tweet into separ
 <!-- SCALE PROBLEM -->
 
 ```{r, eval=FALSE}
-# base hex shapefile
-hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
+# directory loop
+folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
 
-# for each folder, get first zon file from each
-img <- read.csv("z010_i04.zon")
+# we have folders + file names and are in run1 directory
+setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
 
-hex@data$id <- as.numeric(hex@data$id)
-hex@data <- left_join(hex@data, img, by = c("id"= "AreaID"))
-hex@data <- hex@data[order(hex@data$id),]
+cors.master <- data.frame()
+for (folder in folders) {
+  setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/",folder))
+  
+  # base hex shapefile
+  hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
+  
+  out <- data.frame()
+  files <- list.files(pattern = "*.zon")
+  img <- read.csv(files[1])
 
-tes <- unionSpatialPolygons(hex, hex@data$ZoneID)
+  hex@data$id <- as.numeric(hex@data$id)
+  hex@data <- left_join(hex@data, img, by = c("id"= "AreaID"))
+  hex@data <- hex@data[order(hex@data$id),]
+  
+  print(paste("loop for:", folder))
+  tes <- unionSpatialPolygons(hex, hex@data$ZoneID)
+
+  # convert spatial polygons to spatialpolygonsdataframe
+  oldw <- getOption("warn")
+  
+  # silence irrelevant warnings
+  options(warn = -1)
+  df <- data.frame(id = getSpPPolygonsIDSlots(tes))
+  row.names(df) <- getSpPPolygonsIDSlots(tes)
+  options(warn = oldw)
+  
+  spdf <- SpatialPolygonsDataFrame(tes, data = df)
+  
+  # points in polygon spatial join
+  pts.crimes <- point.in.poly(crimes, spdf)
+  pts.tweets <- point.in.poly(tweets, spdf)
+  
+  # aggregate crimes/tweets data
+  pts.agg.crimes <- pts.crimes@data %>% group_by(id.1) %>% summarise(num = n()) %>% arrange(id.1)
+  pts.agg.tweets <- pts.tweets@data %>% group_by(id) %>% summarise(num = n()) %>% arrange(id)
+  
+  # cast ids as factors for left_join
+  pts.agg.crimes$id.1 <- as.integer(pts.agg.crimes$id.1)
+  pts.agg.tweets$id <- as.integer(pts.agg.tweets$id)
+  
+  # join summed crimes/tweets back to data.frame
+  hex@data <- left_join(hex@data, pts.agg.tweets, by = c("ZoneID" = "id"))
+  hex@data <- left_join(hex@data, pts.agg.crimes, by = c("ZoneID" = "id.1"))
+  
+  # correlate unique zone id sums
+  # RBIND EVERY COR INTO MASTER.COR.DF
+  uniques <- hex@data[!duplicated(hex@data$num.x), ]
+  cor.tc <- cor(uniques$num.x, uniques$num.y, use="complete.obs")
+  
+  cors.master <- rbind(cors.master, cor.tc)
+}
 ```
 
 
 ```{r, eval=FALSE}
-# convert spatial polygons to spatialpolygonsdataframe
-df <- data.frame(id = getSpPPolygonsIDSlots(tes))
-row.names(df) <- getSpPPolygonsIDSlots(tes)
-
-# problem = ids arent matching
-spdf <- SpatialPolygonsDataFrame(tes, data = df)
-
-# points in polygon spatial join
-pts.poly <- point.in.poly(crimes, spdf)
-
-# aggregate crimes data
-pts.agg <- pts.poly@data %>% group_by(id.1) %>% summarise(num = n()) %>% arrange(id.1)
-
-# cast as factor
-pts.agg$id.1 <- as.integer(pts.agg$id.1)
-
-# join summed crimes back to data.frame
-hex@data <- left_join(hex@data, pts.agg, by = c("ZoneID" = "id.1"))
-
-# test plot
-spplot(hex, "num", col="transparent", pretty=TRUE)
-
-cor(hex@data$num, hex@data$id)
-
-pts.tweets <- point.in.poly(tweets, spdf)
-
 # loop over directory 
 folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
 
@@ -234,8 +261,9 @@ master <- data.frame()
 for (folder in folders) {
   setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/",folder))
   files <- list.files(pattern = "*.zon")
-
+  print(files[0])
   for (file in files) {
+
     t <- read.csv(file)
     # out <- rbind(out, t)
     print(class(t))
