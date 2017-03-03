@@ -7,6 +7,8 @@ output:
 bibliography: references.bib
 header-includes:
    - \setlength\parindent{24pt}
+   - \usepackage[table]{xcolor}
+   - \usepackage{booktabs}
 ---
 
 \section{Demonstrating the MAUP}
@@ -24,7 +26,7 @@ In practice, the MAUP is condensed into two issues of scale and zoning sensitivi
 
 The second issue, the *zoning problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed with the scale or number of units held constant [@Openshaw]. Zoning sensitivity in multivariate analysis has been demonstrated empirically in @FotheringhamWong who simulated the aggregation of 871 block groups into 218 zones in 150 different iterations. They highlight the severity of the zoning problem by demonstrating the possibility of concluding with one iteration of zones no association between the percentage of blue-collar workers and mean family income, with another iteration finding a unit increase in blue-collar worker percentages as reducing mean family income by \$20,000. In all, ignoring scale and zoning sensitivity in model calibration can lead to inferential conclusions that a researcher's areal data is applicable to the constituents who form the zones under study - the ecological fallacy problem [@Openshaw].
 
-\subsection{MAUP analysis}
+\subsection{Demonstrating the MAUP}
 \label{maup}
 
 \subsubsection{Data}
@@ -159,6 +161,10 @@ document$lon <- as.numeric(document$lon)
 coordinates(document) <- ~lon+lat
 proj4string(document) <- CRS("+init=epsg:4326") # WGS 84
 
+# subsetting operations
+document <- document[document$category == "violent-crime",]
+document <- document[sample(nrow(document), 1000), ]
+
 # write once
 writeOGR(document, "/Users/samcomber/Documents/spatial_analysis/shp/crimes",
          "crimes", driver = "ESRI Shapefile")
@@ -170,23 +176,28 @@ crimes <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/crimes"
 Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets containing timestamps relating to Twitter postings within the municipality of Liverpool for 2012\footnote{This dataset was data mined by Guy Lansley from UCL, and processed by Dani Arribas-Bel.}.
 
 ```{r twitter_data, eval=FALSE}
+# read twitter shapefile
 tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets",
                   layer = "tweets_mersey")
-
+```
+```{r, eval=FALSE,include=FALSE}
 # alternate x and y for correct aggregation (oops)
 lats <- tweets@coords[, 1]
 lon <- tweets@coords[, 2]
 tweets@coords[,1] <- lon
 tweets@coords[,2] <- lats
+
+tweets <- tweets[sample(nrow(tweets), 1000), ]
 ```
 
 <!-- explain IMAGE a bit more -->
+<!-- SHOW BASE HEX FILE -->
 
 To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. Specifically, we investigate the scaling problem using a hex binned lattice which **. Finally, we demonstrate the zoning problem by constraining cardinality - i.e. the number of regions per shapefile - to 100. We generate 10 iterations of 100 regions using Openshaw's depth-first algorithm\footnote{A visualisation of the contiguity graph is showed below.} in IMAGE studio [@Kostas]. 
 
-\subsubsection{MAUP findings}
+\subsubsection{Scale problem}
 
-<!-- SCALE PROBLEM -->
+<!-- SHOW 4 FIGURES OF DIFF SCALE REGIONS -->
 
 ```{r, eval=FALSE}
 # directory loop
@@ -195,22 +206,28 @@ folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
 # we have folders + file names and are in run1 directory
 setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
 
-cors.master <- data.frame()
+# create master dataframe to hold correlation coefficents
+cors.scale.master <- data.frame()
+
+# loop over aggregation folder - i.e. 10 regions, 20, 30
 for (folder in folders) {
   setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/",folder))
   
-  # base hex shapefile
+  # reread hex shapefile everytime we move folder
   hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
   
   out <- data.frame()
   files <- list.files(pattern = "*.zon")
+  
+  # pick first iteration from each scale of aggregation
   img <- read.csv(files[1])
 
+  # join regions to hex shapefile on area id
   hex@data$id <- as.numeric(hex@data$id)
   hex@data <- left_join(hex@data, img, by = c("id"= "AreaID"))
   hex@data <- hex@data[order(hex@data$id),]
   
-  print(paste("loop for:", folder))
+  # dissolve by area id
   tes <- unionSpatialPolygons(hex, hex@data$ZoneID)
 
   # convert spatial polygons to spatialpolygonsdataframe
@@ -241,41 +258,105 @@ for (folder in folders) {
   hex@data <- left_join(hex@data, pts.agg.crimes, by = c("ZoneID" = "id.1"))
   
   # correlate unique zone id sums
-  # RBIND EVERY COR INTO MASTER.COR.DF
   uniques <- hex@data[!duplicated(hex@data$num.x), ]
   cor.tc <- cor(uniques$num.x, uniques$num.y, use="complete.obs")
   
-  cors.master <- rbind(cors.master, cor.tc)
+  # rbind to master frame
+  cors.scale.master <- rbind(cors.scale.master, cor.tc)
 }
 ```
 
+\begin{table}[!htbp]
+\begin{center}
+\caption{Scaling problem tabulated.} \label{tab:scale}
+\begin{tabular}{@{} *5l @{}}    \toprule
+\emph{name} & \emph{foo} &&&  \\\midrule
+Models    & A  & B  & C  & D  \\ 
+ Model $X$ & X1 & X2 & X3 & X4\\ 
+ Model $Y$ & Y1 & Y2 & Y3 & Y4\\\bottomrule
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsubsection{Zoning problem}
+
+<!-- SHOW 4 DIFFERENT ITERATIONS OF REGIONS USING FIGURES -->
 
 ```{r, eval=FALSE}
-# loop over directory 
-folders <- dir("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1")
+# we choose 20 regions to illustrate zoning problem
+setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/z100")
 
-# we have folders + file names and are in run1 directory
-setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/")
+# get all 10 iterations of 20 regions
+files.20 <- list.files(pattern = "*.zon")
+cors.zone.master
+# build master data.frame
+cors.zone.master <- data.frame()
+for (file in files.20) {
+  # 
+  hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
+  
+  # read file to df
+  zon <- read.csv(file)
+  
+  # join regions to hex shapefile on area id
+  hex@data$id <- as.numeric(hex@data$id)
+  hex@data <- left_join(hex@data, zon, by = c("id"= "AreaID"))
+  hex@data <- hex@data[order(hex@data$id),]
+  
+  # dissolve by area id
+  tes <- unionSpatialPolygons(hex, hex@data$ZoneID)
 
-master <- data.frame()
-for (folder in folders) {
-  setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/",folder))
-  files <- list.files(pattern = "*.zon")
-  print(files[0])
-  for (file in files) {
+  # convert spatial polygons to spatialpolygonsdataframe
+  oldw <- getOption("warn")
 
-    t <- read.csv(file)
-    # out <- rbind(out, t)
-    print(class(t))
-    # for each file, we want a list in master list
-    out <- rbind(out, file)
+  # silence irrelevant warnings
+  options(warn = -1)
+  df <- data.frame(id = getSpPPolygonsIDSlots(tes))
+  row.names(df) <- getSpPPolygonsIDSlots(tes)
+  options(warn = oldw)
 
-    break
-  }
-  break
+  spdf <- SpatialPolygonsDataFrame(tes, data = df)
+
+  # points in polygon spatial join
+  pts.crimes <- point.in.poly(crimes, spdf)
+  pts.tweets <- point.in.poly(tweets, spdf)
+
+  # aggregate crimes/tweets data
+  pts.agg.crimes <- pts.crimes@data %>% group_by(id.1) %>% summarise(num = n()) %>% arrange(id.1)
+  pts.agg.tweets <- pts.tweets@data %>% group_by(id) %>% summarise(num = n()) %>% arrange(id)
+
+  # cast ids as factors for left_join
+  pts.agg.crimes$id.1 <- as.integer(pts.agg.crimes$id.1)
+  pts.agg.tweets$id <- as.integer(pts.agg.tweets$id)
+
+  # join summed crimes/tweets back to data.frame
+  hex@data <- left_join(hex@data, pts.agg.tweets, by = c("ZoneID" = "id"))
+  hex@data <- left_join(hex@data, pts.agg.crimes, by = c("ZoneID" = "id.1"))
+
+  # correlate unique zone id sums
+  uniques <- hex@data[!duplicated(hex@data$num.x), ]
+  cor.tc <- cor(uniques$num.x, uniques$num.y, use="complete.obs")
+
+  # rbind to master frame
+  cors.zone.master <- rbind(cors.zone.master, cor.tc)
 }
-
 ```
+
+A tabulation illustrating the zoning problem is shown in 
+
+\begin{table}[!htbp]
+\begin{center}
+\caption{Zoning problem tabulated.} \label{tab:zone}
+\begin{tabular}{@{} *5l @{}}    \toprule
+\emph{name} & \emph{foo} &&&  \\\midrule
+Models    & A  & B  & C  & D  \\ 
+ Model $X$ & X1 & X2 & X3 & X4\\ 
+ Model $Y$ & Y1 & Y2 & Y3 & Y4\\\bottomrule
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \section{Multilevel Modelling}
 
