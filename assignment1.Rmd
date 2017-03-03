@@ -163,7 +163,6 @@ proj4string(document) <- CRS("+init=epsg:4326") # WGS 84
 
 # subsetting operations
 document <- document[document$category == "violent-crime",]
-document <- document[sample(nrow(document), 1000), ]
 
 # write once
 writeOGR(document, "/Users/samcomber/Documents/spatial_analysis/shp/crimes",
@@ -171,6 +170,7 @@ writeOGR(document, "/Users/samcomber/Documents/spatial_analysis/shp/crimes",
 
 crimes <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/crimes",
                   layer = "crimes")
+crimes <- crimes[sample(nrow(crimes), 500), ]
 ```
 
 Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets containing timestamps relating to Twitter postings within the municipality of Liverpool for 2012\footnote{This dataset was data mined by Guy Lansley from UCL, and processed by Dani Arribas-Bel.}.
@@ -187,7 +187,7 @@ lon <- tweets@coords[, 2]
 tweets@coords[,1] <- lon
 tweets@coords[,2] <- lats
 
-tweets <- tweets[sample(nrow(tweets), 1000), ]
+tweets <- tweets[sample(nrow(tweets), 500), ]
 ```
 
 <!-- explain IMAGE a bit more -->
