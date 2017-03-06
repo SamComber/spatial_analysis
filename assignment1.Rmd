@@ -9,6 +9,7 @@ header-includes:
    - \setlength\parindent{24pt}
    - \usepackage[table]{xcolor}
    - \usepackage{booktabs}
+   - \usepackage{subfig}
 ---
 
 \section{Demonstrating the MAUP}
@@ -180,6 +181,9 @@ Regarding our second variable, *tweet_count*, we aggregate geo-referenced tweets
 # read twitter shapefile
 tweets <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/tweets",
                   layer = "tweets_mersey")
+
+# sample 500 tweets
+tweets <- tweets[sample(nrow(tweets), 500), ]
 ```
 ```{r, eval=FALSE,include=FALSE}
 # alternate x and y for correct aggregation (oops)
@@ -191,7 +195,7 @@ tweets@coords[,2] <- lats
 tweets <- tweets[sample(nrow(tweets), 500), ]
 ```
 
-To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. We investigate the scaling problem using an iterative process that increments the number of regions in a hex-binned lattice from 10 to 100 (stepping each iteration by 10 regions). To demonstrate the zoning problem we constrain cardinality - i.e. the number of regions - to 30, and calculate correlation coefficients using 10 different permutations of 30 regions. To build random regions, we use the multiple aggregatons feature in IMAGE studio [@Kdaras] which uses a depth-first search algorithm for a given contiguity matrix to create aggregated spatial regions.
+To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. We investigate the scaling problem using an iterative process that increments the number of regions in a hex-binned lattice from 10 to 100 (stepping each iteration by 10 regions). To demonstrate the zoning problem we constrain cardinality - i.e. the number of regions - to 30, and calculate correlation coefficients using 10 different permutations of 30 regions. To build random regions, we use the multiple aggregatons feature in IMAGE studio [@KDaras] which uses a depth-first search algorithm for a given contiguity matrix to create aggregated spatial regions. We then dissolve regions with the `unionSpatialPolygons` using the generated `ZoneID` for aggregations.
 
 \subsubsection{Scale problem}
 
@@ -260,59 +264,32 @@ for (folder in folders) {
   # rbind to master frame
   cors.scale.master <- rbind(cors.scale.master, cor.tc)
 }
+
+cors.scale.master
 ```
 
-<!-- SHOW 4 FIGURES OF DIFF SCALE REGIONS -->
-
-```{r}
-
-hex_30 <- readOGR(dsn = ".", layer = "hex_30")
-hex_30@data$new_id <- row.names(hex_30@data)
-hex_30.pts <- fortify(hex_30, region = "id")
-hex_30.df <- plyr::join(hex_30.pts, hex_30@data, by = "id")
-
-a <- ggplot(hex_30.df) + 
-  aes(long,lat,group=group, fill = z030_i01_Z) + 
-  geom_polygon() + theme_classic() + theme(legend.position="none")+ coord_equal()
-
-hex_60 <- readOGR(dsn = ".", layer = "hex_60")
-hex_60@data$new_id <- row.names(hex_60@data)
-hex_60.pts <- fortify(hex_60, region = "id")
-hex_60.df <- plyr::join(hex_60.pts, hex_60@data, by = "id")
-
-b <- ggplot(hex_60.df) + 
-  aes(long,lat,group=group, fill = z060_i01_Z) + 
-  geom_polygon() + theme_classic() + theme(legend.position="none")+ coord_equal()
-
-
-
-c <- ggplot(hex_10.df) + 
-  aes(long,lat,group=group, fill = z010_i01_Z) + 
-  geom_polygon() + theme_classic() + theme(legend.position="none")+ coord_equal()
-
-hex_100 <- readOGR(dsn = ".", layer = "hex_100")
-hex_100@data$new_id <- row.names(hex_100@data)
-hex_100.pts <- fortify(hex_100, region = "id")
-hex_100.df <- plyr::join(hex_100.pts, hex_100@data, by = "id")
-
-d <- ggplot(hex_100.df) + 
-  aes(long,lat,group=group, fill = z100_i01_Z) + 
-  geom_polygon() + theme_classic() + theme(legend.position="none")+ coord_equal()
-
-plot_grid(c,a,b,d, labels=c("A", "B","C","D"), ncol = 2, nrow = 2)
-lpool <- get_map("Liverpool")
-
-ggmap(get_map("Liverpool",zoom=13,maptype = "roadmap"))
-```
+\begin{figure}[!htbp]
+\centering
+\includegraphics{IMG/cowplot.jpeg}
+\caption{Scale aggregations. A shows 10 regions, B shows 30 regions, C shows 60 regions and D shows 100 regions.}
+\label{fig:scake}
+\end{figure}
 
 \begin{table}[!htbp]
 \begin{center}
-\caption{Scaling problem tabulated.} \label{tab:scale}
+\caption{Correlations between crime and tweet counts.} \label{tab:scale}
 \begin{tabular}{@{} *5l @{}}    \toprule
-\emph{name} & \emph{foo} &&&  \\\midrule
-Models    & A  & B  & C  & D  \\ 
- Model $X$ & X1 & X2 & X3 & X4\\ 
- Model $Y$ & Y1 & Y2 & Y3 & Y4\\\bottomrule
+\emph{Number of regions} & \emph{Correlation coeff.} &&&  \\\midrule
+ 10  & 0.84  \\ 
+ 20  & 0.88 \\ 
+ 30  & 0.88 \\ 
+ 40  & 0.82 \\ 
+ 50  & 0.73 \\ 
+ 60  & 0.89 \\ 
+ 70  & 0.89 \\ 
+ 80  & 0.61 \\ 
+ 90  & 0.97 \\ 
+ 100 & 0.63 \\\bottomrule
  \hline
 \end{tabular}
 \end{center}
@@ -320,11 +297,9 @@ Models    & A  & B  & C  & D  \\
 
 \subsubsection{Zoning problem}
 
-<!-- SHOW 4 DIFFERENT ITERATIONS OF REGIONS USING FIGURES -->
-
 ```{r, eval=FALSE}
 # we choose 20 regions to illustrate zoning problem
-setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/z100")
+setwd("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1/z070")
 
 # get all 10 iterations of 20 regions
 files.20 <- list.files(pattern = "*.zon")
@@ -332,7 +307,6 @@ cors.zone.master
 # build master data.frame
 cors.zone.master <- data.frame()
 for (file in files.20) {
-  # 
   hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
   
   # read file to df
@@ -382,16 +356,30 @@ for (file in files.20) {
 }
 ```
 
-A tabulation illustrating the zoning problem is shown in 
+\begin{figure}[!htbp]
+\centering
+\includegraphics{IMG/cowplot_zon.jpeg}
+\caption{Zone aggregations. Four iterations displayed A-D.}
+\label{fig:zone}
+\end{figure}
+
+From \autoref{tab:zone}, we demonstrate the zoning problem: .
 
 \begin{table}[!htbp]
 \begin{center}
-\caption{Zoning problem tabulated.} \label{tab:zone}
+\caption{Correlation coefficients for 10 iterations of 70 regions.} \label{tab:zone}
 \begin{tabular}{@{} *5l @{}}    \toprule
-\emph{name} & \emph{foo} &&&  \\\midrule
-Models    & A  & B  & C  & D  \\ 
- Model $X$ & X1 & X2 & X3 & X4\\ 
- Model $Y$ & Y1 & Y2 & Y3 & Y4\\\bottomrule
+\emph{Iteration} & \emph{Correlation coeff.} &&&  \\\midrule
+ 1  & 0.89 \\ 
+ 2  & 0.66 \\ 
+ 3  & 0.61 \\ 
+ 4  & 0.89 \\ 
+ 5  & 0.42 \\ 
+ 6  & 0.96 \\ 
+ 7  & 0.75 \\ 
+ 8  & 0.92 \\ 
+ 9  & 0.82 \\ 
+ 10 & 0.84 \\\bottomrule
  \hline
 \end{tabular}
 \end{center}
