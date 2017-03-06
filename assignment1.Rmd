@@ -211,10 +211,12 @@ cors.scale.master <- data.frame()
 
 # loop over aggregation folder - i.e. 10 regions, 20, 30
 for (folder in folders) {
-  setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/",folder))
+  setwd(paste0("/Users/samcomber/Documents/spatial_analysis/shp/img_stud/run1","/"
+               ,folder))
   
   # reread hex shapefile everytime we move folder
-  hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
+  hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", 
+                 layer = "hex_1_clip")
   
   out <- data.frame()
   files <- list.files(pattern = "*.zon")
@@ -246,8 +248,10 @@ for (folder in folders) {
   pts.tweets <- point.in.poly(tweets, spdf)
   
   # aggregate crimes/tweets data
-  pts.agg.crimes <- pts.crimes@data %>% group_by(id.1) %>% summarise(num = n()) %>% arrange(id.1)
-  pts.agg.tweets <- pts.tweets@data %>% group_by(id) %>% summarise(num = n()) %>% arrange(id)
+  pts.agg.crimes <- pts.crimes@data %>% group_by(id.1) %>% summarise(num = n()) 
+  %>% arrange(id.1)
+  pts.agg.tweets <- pts.tweets@data %>% group_by(id) %>% summarise(num = n()) 
+  %>% arrange(id)
   
   # cast ids as factors for left_join
   pts.agg.crimes$id.1 <- as.integer(pts.agg.crimes$id.1)
@@ -264,8 +268,6 @@ for (folder in folders) {
   # rbind to master frame
   cors.scale.master <- rbind(cors.scale.master, cor.tc)
 }
-
-cors.scale.master
 ```
 
 \begin{figure}[!htbp]
@@ -274,6 +276,8 @@ cors.scale.master
 \caption{Scale aggregations. A shows 10 regions, B shows 30 regions, C shows 60 regions and D shows 100 regions.}
 \label{fig:scake}
 \end{figure}
+
+From \autoref{tab:scale}, we demonstrate the scaling problem. Generally, we observe rising correlations with increasing scale. Had the MAUP not existed, we would observe little systematic variation in the correlation between violent crime and tweets - we observe a difference of 0.36 between the upper and lower coefficients. Interestingly, we observe a correlation coefficient of 0.61 at 80 regions which lends evidence to @ClarkAvery findings that the low adjacency of zonal units at higher aggregations leads to lower correlation.
 
 \begin{table}[!htbp]
 \begin{center}
@@ -359,11 +363,11 @@ for (file in files.20) {
 \begin{figure}[!htbp]
 \centering
 \includegraphics{IMG/cowplot_zon.jpeg}
-\caption{Zone aggregations. Four iterations displayed A-D.}
+\caption{Zone aggregations. Four iterations displayed A-D for 70 regions.}
 \label{fig:zone}
 \end{figure}
 
-From \autoref{tab:zone}, we demonstrate the zoning problem: .
+From \autoref{tab:zone}, we demonstrate the zoning problem: with 10 aggregation iterations for 70 regions we observe positive correlation between violent crime and tweets ranging from 0.42 (moderate assocation) to 0.96 (very strong association).
 
 \begin{table}[!htbp]
 \begin{center}
@@ -387,11 +391,7 @@ From \autoref{tab:zone}, we demonstrate the zoning problem: .
 
 \section{Multilevel Modelling}
 
-In this section, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the levels.
-
-\subsection{Model specification}
-
-<!-- variables decision -->
+In this section, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the levels. We firstly load price paid paid from the Land Registry:
 
 ```{r, eval=FALSE}
 # msoa and lsoa geographies were joined by location in QGIS
@@ -446,10 +446,12 @@ write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
           geocoded_lr.csv", row.names=FALSE)
 
 # convert to spatial points df
+lr <- 
 
 # each property has an LSOA and an MSOA code, along with IMD info (POINT IN POLYGON)
 
 ```
+\subsection{Model specification}
 
 <!-- model specification(s) -->
 
