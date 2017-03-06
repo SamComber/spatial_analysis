@@ -1,5 +1,5 @@
 ---
-title: "Assignment Two: The MAUP and Multilevel Modelling"
+title: "Assignment One: The MAUP and Multilevel Modelling"
 output:
   pdf_document:
     toc: true
@@ -311,7 +311,8 @@ cors.zone.master
 # build master data.frame
 cors.zone.master <- data.frame()
 for (file in files.20) {
-  hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", layer = "hex_1_clip")
+  hex <- readOGR(dsn = "/Users/samcomber/Documents/spatial_analysis/shp/hex", 
+                 layer = "hex_1_clip")
   
   # read file to df
   zon <- read.csv(file)
@@ -340,8 +341,10 @@ for (file in files.20) {
   pts.tweets <- point.in.poly(tweets, spdf)
 
   # aggregate crimes/tweets data
-  pts.agg.crimes <- pts.crimes@data %>% group_by(id.1) %>% summarise(num = n()) %>% arrange(id.1)
-  pts.agg.tweets <- pts.tweets@data %>% group_by(id) %>% summarise(num = n()) %>% arrange(id)
+  pts.agg.crimes <- pts.crimes@data %>% group_by(id.1) %>% summarise(num = n()) 
+  %>% arrange(id.1)
+  pts.agg.tweets <- pts.tweets@data %>% group_by(id) %>% summarise(num = n()) 
+  %>% arrange(id)
 
   # cast ids as factors for left_join
   pts.agg.crimes$id.1 <- as.integer(pts.agg.crimes$id.1)
@@ -394,12 +397,6 @@ From \autoref{tab:zone}, we demonstrate the zoning problem: with 10 aggregation 
 In this section, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the levels. We firstly load price paid paid from the Land Registry:
 
 ```{r, eval=FALSE}
-# msoa and lsoa geographies were joined by location in QGIS
-# as R lacks any robust library for polygon.in.polygon joins
-lsoa.join <- readOGR(dsn = 
-                     "/Users/samcomber/Documents/spatial_analysis/shp/spatial_join",
-                     layer = "lsoa_join", stringsAsFactors = FALSE)
-
 # save location to tmp folder
 temp <- "/tmp/lpool_pp.csv"
 
@@ -448,8 +445,9 @@ write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
 # convert to spatial points df
 lr <- 
 
-# each property has an LSOA and an MSOA code, along with IMD info (POINT IN POLYGON)
-
+# LSOA and MSOA geographies joined by location in QGIS as
+# R lacks library for polygon.in.polygon joins
+lsoa.join <- readOGR(dsn = ".", layer = "lsoa_join", stringsAsFactors = FALSE)
 ```
 \subsection{Model specification}
 
