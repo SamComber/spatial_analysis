@@ -394,7 +394,14 @@ From \autoref{tab:zone}, we demonstrate the zoning problem: with 10 aggregation 
 
 \section{Multilevel Modelling}
 
-In this section, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the levels. We firstly load price paid paid from the Land Registry:
+Having demonstrated the MAUP, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the scale geographies. Firstly, we aggregate the median price paid per property for each LSOA:
+
+<!-- 2) NULL MODEL (TUESDAY) -->
+
+<!-- 3) RANDOM SLOPES - JUSTIFY USE WITH FACET_WRAP PLOT (WEDNESDAY) -->
+
+<!-- 4) RESULTS (THURSDAY) -->
+
 
 ```{r, eval=FALSE}
 # save location to tmp folder
@@ -443,54 +450,98 @@ write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
           geocoded_lr.csv", row.names=FALSE)
 
 # convert to spatial points df
-  lr <- read.csv("lpool_pp.csv", header = TRUE, sep=",")
+lr <- read.csv("lpool_pp.csv", header = TRUE, sep=",")
 coordinates(lr) <- ~lon + lat
 proj4string(lr) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 
 # write once
 writeOGR(lr, "/Users/samcomber/Documents/spatial_analysis/shp/spatial_join",
          "lr", driver = "ESRI Shapefile")
+```
 
+We then tidy the data, before log transforming median housing price per LSOA to relax the assumption of normality:
+
+```{r data_prep, results="hide"}
+setwd("/Users/samcomber/documents/spatial_analysis/shp/spatial_join")
 # LSOA and MSOA geographies joined by location in QGIS as
 # R lacks library for polygon.in.polygon joins
 lsoa.join <- readOGR(dsn = ".", layer = "lsoa_join", stringsAsFactors = FALSE)
+# take only dataframe
 lsoa.join <- lsoa.join@data
+# cast as integer
 lsoa.join$md_2015 <- as.numeric(lsoa.join$md_2015)
+# log housing prices
+lsoa.join$md_2015 <- log(lsoa.join$md_2015)
+# take only complete cases
+lsoa.join <- lsoa.join[complete.cases(lsoa.join),]
+
+# proportion over 65
+
 ```
+ 
 \subsection{Model specification}
 
-<!-- model specification(s) -->
+\subsubsection{Null Model}
 
-$$ Price_{i,j} = \beta $$
+Generally, our goal of estimation are the partial-pooling estimates of the median logged housing prices among all LSOAs in MSOA $j$. In our null model of no predictors, we approximate the multilevel estimate for MSOA $j$ as a weighted average of the mean of properties sold in the MSOA - an unpooled estimate $\hat{y}_j$ - and the mean across all MSOAs - the completely pooled estimate, $\hat{y}_\textnormal{all}$. As the weighted average uses information available about individual LSOAs, averages from MSOAs with a small number of constituent LSOAs carry less weighting, and so the multilevel estimate is pulled closer to Liverpool's overall average\footnote{In this way, the relative weights are determined by the sample size in the group and the variation within and between groups.} [@Gelman]. To allow this 'soft constraint' on $\alpha _j$, partial-pooling estimates are derived by assigning a probability distribution to the $\alpha_j$'s which pulls estimates of $\alpha _j$ some way towards their mean level $\mu _\alpha$ as below:
 
-```{r null model}
+$$ \alpha_j \sim \mathcal{N}(\mu _\alpha,\,\sigma_{\alpha}^{2})\, \textnormal{for } j = 1, . . ., J, $$ 
 
+where the mean $\mu _\alpha$ and standard deviation $\sigma _\alpha$ derived from the data.
+
+To begin decomposing how median log housing prices vary by LSOA and MSOA geographies, we specify the following null multilevel model:
+
+$$ y_{i,j} = \alpha_{0,j} + \epsilon_{i,j} $$
+
+$$ \alpha_{0,j} = \alpha_0 + \mu_{0,j} $$
+
+where $y_{i,j}$ is the median logged housing price for LSOA $i$ in MSOA $j$, 
+
+<!--  JUSTIFY NULL MODEL HERE -->
+
+```{r null model, results="hide"}
 # ----------- NULL MODEL ------------
 
-# check null model to evaluate how variation in median house price decomposed to LSOA and MSOA scales
+# (1|MSOA11CD) allows intercept (coefficient of 1 is the constant 
+# term in the regression) to vary by MSOA
 model.null <- lmer(md_2015 ~ 1 + (1|MSOA11CD), data = lsoa.join)
 
+# get variance
+vc <- VarCorr(model.null)
+print(vc,comp=c("Variance"))
 
+# calculate variance partition coefficient
+print(paste0(round(0.18341 / (0.18341 + 0.12261), 3),"%"))
 
+# catepillar graph to visualise mean of each MSOA random effect
+msoa.rand.eff <- REsim(model.null)
+p <- plotREsim(msoa.rand.eff)
 ```
+
+Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs. This infers the presence of spatial heterogeneity between groups, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies.
+
+\subsubsection{Random-slopes model}
 
 $$ Price_{i,j} = \beta $$
 
-```{r random_slopes}
+```{r random_slopes, eval=FALSE}
 # ----------- RANDOM SLOPES ---------
 sample.20 <- sample(unique(lsoa.join$MSOA11CD), 20, replace=F)
 
-ggplot(lsoa.join[lsoa.join$MSOA11CD %in% sample.20,], aes(x = lr_income, y = md_2015)) + geom_point() +
+ggplot(lsoa.join[lsoa.join$MSOA11CD %in% sample.20,], aes(x = lr_income, y = md_2015)) + 
+  geom_point() +
   geom_smooth(method="lm") +
   facet_wrap(~ MSOA11CD) +
   xlab("Income deprivation") +
   ylab("Median housing price") +
   theme_bw()
+
+model.var.slope <- lmer(md_2015 ~ lr_income + lr_employm 
+                        + (1 + lr_crime | MSOA11CD), data=lsoa.join)
+
+summary(model.var.slope)
 ```
 
-
-
-\subsection{Analysis}
 \subsection{Interpretation}
 
 \section{Bibliography}
