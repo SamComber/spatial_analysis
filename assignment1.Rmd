@@ -396,6 +396,8 @@ From \autoref{tab:zone}, we demonstrate the zoning problem: with 10 aggregation 
 
 Having demonstrated the MAUP, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the scale geographies. Firstly, we aggregate the median price paid per property for each LSOA:
 
+<!-- 1) JOIN CSVS TO MAIN SHAPEFILE TO MAKE IT LOOK BETTER LOL-->
+
 <!-- 2) NULL MODEL (TUESDAY) -->
 
 <!-- 3) RANDOM SLOPES - JUSTIFY USE WITH FACET_WRAP PLOT (WEDNESDAY) -->
@@ -483,7 +485,7 @@ lsoa.join <- lsoa.join[complete.cases(lsoa.join),]
 
 \subsubsection{Null Model}
 
-Generally, our goal of estimation are the partial-pooling estimates of the median logged housing prices among all LSOAs in MSOA $j$. In our null model of no predictors, we approximate the multilevel estimate for MSOA $j$ as a weighted average of the mean of properties sold in the MSOA - an unpooled estimate $\hat{y}_j$ - and the mean across all MSOAs - the completely pooled estimate, $\hat{y}_\textnormal{all}$. As the weighted average uses information available about individual LSOAs, averages from MSOAs with a small number of constituent LSOAs carry less weighting, and so the multilevel estimate is pulled closer to Liverpool's overall average\footnote{In this way, the relative weights are determined by the sample size in the group and the variation within and between groups.} [@Gelman]. To allow this 'soft constraint' on $\alpha _j$, partial-pooling estimates are derived by assigning a probability distribution to the $\alpha_j$'s which pulls estimates of $\alpha _j$ some way towards their mean level $\mu _\alpha$ as below:
+Generally, our goal of estimation is the partial-pooling estimates of the median logged housing prices among all LSOAs in MSOA $j$. In our null model of no predictors, we approximate the multilevel estimate for MSOA $j$ as a weighted average of the mean of properties sold in the MSOA - an unpooled estimate $\hat{y}_j$ - and the mean across all MSOAs - the completely pooled estimate, $\hat{y}_\textnormal{all}$. As the weighted average uses information available about individual LSOAs, averages from MSOAs with a small number of constituent LSOAs carry less weighting, and so the multilevel estimate is pulled closer to Liverpool's overall average\footnote{In this way, the relative weights are determined by the sample size in the group and the variation within and between groups.} [@Gelman]. To allow this 'soft constraint' on $\alpha _j$, partial-pooling estimates are derived by assigning a probability distribution to the $\alpha_j$'s which pulls estimates of $\alpha _j$ some way towards their mean level $\mu _\alpha$ as below:
 
 $$ \alpha_j \sim \mathcal{N}(\mu _\alpha,\,\sigma_{\alpha}^{2})\, \textnormal{for } j = 1, . . ., J, $$ 
 
@@ -495,7 +497,7 @@ $$ y_{i,j} = \alpha_{0,j} + \epsilon_{i,j} $$
 
 $$ \alpha_{0,j} = \alpha_0 + \mu_{0,j} $$
 
-where $y_{i,j}$ is the median logged housing price for LSOA $i$ in MSOA $j$, 
+where in the first row, $y_{i,j}$ is the median logged housing price for the $i^{th}$ LSOA in MSOA $j$, $\alpha_{0,j}$ is the MSOA-level mean of $y_{i,j}$ (varying intercept) for the $j^{th}$ MSOA, and $\epsilon_{i,j}$ is the residual error term assumed i.i.d; where in the second row, $\alpha_0$ is the overall intercept, and finally $\mu_{0,j}$ is the random error component for the deviation of the intercept of the $j^{th}$ group from the overall intercept.
 
 <!--  JUSTIFY NULL MODEL HERE -->
 
@@ -512,13 +514,15 @@ print(vc,comp=c("Variance"))
 
 # calculate variance partition coefficient
 print(paste0(round(0.18341 / (0.18341 + 0.12261), 3),"%"))
+```
 
+Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs. This infers the presence of spatial heterogeneity between groups, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies.
+
+```{r}
 # catepillar graph to visualise mean of each MSOA random effect
 msoa.rand.eff <- REsim(model.null)
 p <- plotREsim(msoa.rand.eff)
 ```
-
-Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs. This infers the presence of spatial heterogeneity between groups, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies.
 
 \subsubsection{Random-slopes model}
 
