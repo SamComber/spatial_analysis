@@ -403,8 +403,8 @@ temp <- "/tmp/lpool_pp.csv"
 # download from source
 download.file(paste0("http://landregistry.data.gov.uk/app/ppd/ppd_data.csv
                      ?et%5B%5D=lrcommon%3Afreehold&et%5B%5D=lrcommon%3Aleasehold
-                     &header=true&limit=all&max_date=31+December+2016
-                     &min_date=1+January+2016&nb%5B%5D=true&nb%5B%5D=false
+                     &header=true&limit=all&max_date=31+December+2015
+                     &min_date=1+January+2015&nb%5B%5D=true&nb%5B%5D=false
                      &ptype%5B%5D=lrcommon%3Adetached&ptype%5B%5D=lrcommon%3Asemi-detached
                      &ptype%5B%5D=lrcommon%3Aterraced&ptype%5B%5D=lrcommon%
                      3Aflat-maisonette&ptype%5B%5D=lrcommon%3AotherPropertyType
@@ -443,17 +443,52 @@ write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
           geocoded_lr.csv", row.names=FALSE)
 
 # convert to spatial points df
-lr <- 
+  lr <- read.csv("lpool_pp.csv", header = TRUE, sep=",")
+coordinates(lr) <- ~lon + lat
+proj4string(lr) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+
+# write once
+writeOGR(lr, "/Users/samcomber/Documents/spatial_analysis/shp/spatial_join",
+         "lr", driver = "ESRI Shapefile")
 
 # LSOA and MSOA geographies joined by location in QGIS as
 # R lacks library for polygon.in.polygon joins
 lsoa.join <- readOGR(dsn = ".", layer = "lsoa_join", stringsAsFactors = FALSE)
+lsoa.join <- lsoa.join@data
+lsoa.join$md_2015 <- as.numeric(lsoa.join$md_2015)
 ```
 \subsection{Model specification}
 
 <!-- model specification(s) -->
 
 $$ Price_{i,j} = \beta $$
+
+```{r null model}
+
+# ----------- NULL MODEL ------------
+
+# check null model to evaluate how variation in median house price decomposed to LSOA and MSOA scales
+model.null <- lmer(md_2015 ~ 1 + (1|MSOA11CD), data = lsoa.join)
+
+
+
+```
+
+$$ Price_{i,j} = \beta $$
+
+```{r random_slopes}
+# ----------- RANDOM SLOPES ---------
+sample.20 <- sample(unique(lsoa.join$MSOA11CD), 20, replace=F)
+
+ggplot(lsoa.join[lsoa.join$MSOA11CD %in% sample.20,], aes(x = lr_income, y = md_2015)) + geom_point() +
+  geom_smooth(method="lm") +
+  facet_wrap(~ MSOA11CD) +
+  xlab("Income deprivation") +
+  ylab("Median housing price") +
+  theme_bw()
+```
+
+
 
 \subsection{Analysis}
 \subsection{Interpretation}
