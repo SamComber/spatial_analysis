@@ -398,8 +398,6 @@ Having demonstrated the MAUP, we implement a two-level multilevel model that acc
 
 <!-- 1) JOIN CSVS TO MAIN SHAPEFILE TO MAKE IT LOOK BETTER LOL-->
 
-<!-- 2) NULL MODEL (TUESDAY) -->
-
 <!-- 3) RANDOM SLOPES - JUSTIFY USE WITH FACET_WRAP PLOT (WEDNESDAY) -->
 
 <!-- 4) RESULTS (THURSDAY) -->
@@ -525,6 +523,8 @@ p <- plotREsim(msoa.rand.eff)
 ```
 
 \subsubsection{Random-slopes model}
+
+To rationalise a varying intercept and slope model, we 
 
 $$ Price_{i,j} = \beta $$
 
