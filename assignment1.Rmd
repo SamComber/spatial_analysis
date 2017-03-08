@@ -554,19 +554,27 @@ ggplot(lsoa.join[lsoa.join$MSOA11CD %in% sample.20,], aes(x = lr_income, y = md_
 
 <!-- INFORM WITH DEFINITION OF ERROR TERMS FROM SLIDES -->
 
-As \autoref{fig:vari} demonstrates variance between median logged housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor [@Gelman]. This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
+As \autoref{fig:vari} demonstrates variance between median logged housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model\footnote{-2 log likelihood test also concluded **.}. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor [@Gelman]. This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
 
 $$ y_{i,j} = \alpha _{i,j} + \beta _{1,j}x_{1,ij} + \beta _{2,j}x_{2,ij} + \epsilon _{0,ij}$$
 
-$$ \alpha _{0,j} = \alpha _{0} + \mu_{0,j} $$
+$$ \alpha _{0,j} = \alpha _{0} + \mu_{0j} $$
 
-$$ \beta _{1,j} = $$
+$$ \beta _{1,j} = \beta +1 + \mu_{1j}  $$
 
-which can be written as:
+which can be re-expressed into a single level by substituting formulae for $\alpha _{0,j}$ and $\beta _{1,j}$ into $y_{i,j}$ as:
 
-$$ y_{i,j} = \beta _0 + \beta $$
+$$ y_{i,j} = \beta _0 + \beta_1 x_{ij} + \mu_{0j} + \mu_{1j}x{ij} + \epsilon_{ij} $$
 
-Conceptually, this equation is similar to the null model, but the $\mu _{1j}x_{ij}$ term is added which **. 
+Conceptually, this equation is similar to the null model, but the $\mu _{1j}x_{ij}$ term has been added to reflect the interaction between the $j^{th}$ MSOA and predictor $x$. The random effects $\mu_{0j}$ and $\mu_{1j}$ are assumed: 
+
+$$\begin{bmatrix} \mu_{0j} \\\ \mu_{1j} \end{bmatrix} \sim \mathcal{N}(0,
+\begin{bmatrix}
+\sigma_{\mu0}^{2} & \\ 
+\sigma_{\mu 0 \mu 1} & \sigma_{\mu1}^{2} 
+\end{bmatrix})$$
+
+meaning the slope of regression line for MSOA $j$ is $\beta_1 + \mu_{ij}$.
 
 
 <!-- 
@@ -584,6 +592,8 @@ model.var.slope <- lmer(md_2015 ~ lr_income + lr_employm
 msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
 ```
+
+<!-- RANDOM SLOPES TABLE -->
 
 \subsection{Interpretation}
 
