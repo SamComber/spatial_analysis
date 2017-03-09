@@ -118,7 +118,7 @@ tweets@coords[,2] <- lats
 tweets <- tweets[sample(nrow(tweets), 500), ]
 ```
 
-To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. We investigate the scaling problem using an iterative process that increments the number of regions in a hex-binned lattice from 10 to 100 (stepping each iteration by 10 regions). To demonstrate the zoning problem we constrain cardinality - i.e. the number of regions - to 30, and calculate correlation coefficients using 10 different permutations of 30 regions. To build random regions, we use the multiple aggregatons feature in IMAGE studio (Konstatinos, 2017) which uses a depth-first search algorithm for a given contiguity matrix to create aggregated spatial regions. We then dissolve regions with the `unionSpatialPolygons` using the generated `ZoneID` for aggregations.
+To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. We investigate the scaling problem using an iterative process that increments the number of regions in a hex-binned lattice from 10 to 100 (stepping each iteration by 10 regions). To demonstrate the zoning problem we constrain cardinality - i.e. the number of regions - to 30, and calculate correlation coefficients using 10 different permutations of 30 regions. To build random regions, we use the multiple aggregatons feature in IMAGE studio (Daras, 2017) which uses a depth-first search algorithm for a given contiguity matrix to create aggregated spatial regions. We then dissolve regions with the `unionSpatialPolygons` using the generated `ZoneID` for aggregations.
 
 \subsubsection{Scale problem}
 
@@ -555,6 +555,7 @@ In all, by modelling the micro (LSOA) and macro (MSOA) models simultaneously, th
 * Clark, W. and Avery, K. (1976) The effects of data aggregation in statistical analysis. <i>Geographical Analysis</i>, Vol.8 p-428-438.
 * Fotheringham A. and Wong, D. (1991) The Modifiable Areal Unit Problem in Multivariate Statistical Analysis. <i>Environment and planning A</i>. Vol. 23 (7), p.1025-1044.
 * Gelman, A. (2007) <i>Data Analysis using Regression and Multilevel/Hierarchical Models</i>. Cambridge University Press: Camrbidge.
+* Daras, K. (2017) Image Studio, Github repositry, available at: <https://github.com/IMAGE-Project/IMAGE_Studio_bin> [Accessed 05/03/2017].
 * Openshaw S, (1984) <i>The Modifiable Areal Unit Problem - Concepts and Techniques in Modern Geography</i>. Geo Books: Norwich. 
 
 \newpage
