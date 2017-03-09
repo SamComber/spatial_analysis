@@ -40,6 +40,7 @@ library(rgdal)
 library(httr)
 library(ggplot2)
 library(ggmap)
+library(lattice)
 library(sp)
 library(maptools)
 library(classInt)
@@ -526,9 +527,6 @@ Overall, we estimate mean attainment (across MSOAs) as *. The mean for the $j^{t
 
 Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs. This infers the presence of spatial heterogeneity between MSOAs, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies.
 
-
-<!-- -2 log-likelihood value -->
-
 ```{r}
 # catepillar graph to visualise mean of each MSOA random effect
 msoa.rand.eff <- REsim(model.null)
@@ -550,47 +548,45 @@ To rationalise a varying intercept and slope model, we assess the variability be
 
 As \autoref{fig:varib} demonstrates variance between median logged housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model\footnote{-2 log likelihood test also concluded **.}. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor [@Gelman]. This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
 
-$$ y_{i,j} = \alpha _{ij} + \beta _{1}x_{1,ij} + \beta _{2j}x_{2,ij} + \epsilon _{0,ij}$$
+$$ y_{ij} = \alpha _{ij} + \beta _{1}x_{1,ij} + \beta _{2j}x_{2,ij} + \epsilon _{0,ij}$$
 
 $$ \alpha _{0j} = \alpha _{0} + \mu_{0j} $$
 
 $$ \beta _{2j} = \beta +1 + \mu_{1j}  $$
 
-which can be re-expressed into a single level by substituting formulae for $\alpha _{0j}$ and $\beta _{2j}$ into $y_{i,j}$ as:
+which can be re-expressed into a single level by substituting formulae for $\alpha _{0j}$ and $\beta _{2j}$ into $y_{ij}$ as:
 
-$$ y_{i,j} = \alpha _0 + \beta_1 x_{ij} + \mu_{0j} + \mu_{2j}x_{ij} + \epsilon_{ij} $$
+$$ y_{ij} = \alpha _0 + \beta_1 x_{ij} + \mu_{0j} + \mu_{2j}x_{ij} + \epsilon_{ij} $$
 
-Conceptually, this equation is similar to the null model, but the $\mu _{1j}x_{ij}$ term has been added to reflect the interaction between the $j^{th}$ MSOA and predictor $x$. The random effects $\mu_{0j}$ and $\mu_{sj}$ are assumed: 
+Conceptually, this equation is similar to the null model, but the $\mu _{2j}x_{ij}$ term has been added to reflect the interaction between the $j^{th}$ MSOA and predictor $x$. The random effects $\mu_{0j}$ and $\mu_{2j}$ are assumed: 
 
-$$\begin{bmatrix} \mu_{0j} \\\ \mu_{1j} \end{bmatrix} \sim \mathcal{N}(0,
+$$\begin{bmatrix} 
+\mu_{0j} \\\ \mu_{2j} \end{bmatrix} 
+\sim \mathcal{N}(0,
 \begin{bmatrix}
 \sigma_{\mu0}^{2} & \\ 
-\sigma_{\mu 0 \mu 1} & \sigma_{\mu1}^{2} 
+\sigma_{\mu 0 \mu 2} & \sigma_{\mu2}^{2} 
 \end{bmatrix})$$
 
-meaning the slope of regression line for MSOA $j$ is $\beta_2 + \mu_{ij}$, which allows the coefficient to vary by group.
-
-
-<!-- 
-
-https://www.cmm.bris.ac.uk/lemma/mod/lesson/view.php?id=276
-https://www.cmm.bris.ac.uk/lemma/mod/lesson/view.php?id=280
-
--->
+meaning the slope of regression line for MSOA $j$ is $\beta_2 + \mu_{ij}$, which allows the coefficient to vary by group. We define our random-slopes model in $R$ as follows:
 
 ```{r}
 model.var.slope <- lmer(md_2015 ~ lr_crime 
-                        + (1 + lr_income | MSOA11CD), data=lsoa.join)
+                        + (1 + lr_income | MSOA11CD), data=lsoa.join, REML = FALSE)
 
 model.var.slope.fit <- lmer(md_2015 ~ lr_crime 
-                        + (1 | MSOA11CD), data=lsoa.join)
+                        + (1 | MSOA11CD), data=lsoa.join,  REML = FALSE)
 
 anova(model.var.slope, model.var.slope.fit)
 ```
 
-Firstly, we use a likelihood ratio test derived from an ANOVA table to estimate whether the income deprivation effect varies across MSOAs. As the deduction of the log-likelihood values computes a likelihood ratio value of 67.47 on 2 degrees of free, we can infer the income deprivation effect varies across MSOAs, justifying the use of a random-slopes model. 
+Firstly, we use a likelihood ratio test derived from an ANOVA table to estimate whether the income deprivation effect varies across MSOAs. As the deduction of the log-likelihood values computes a likelihood ratio value of 67.47 on 2 degrees of freedom, we can infer the income deprivation effect varies across MSOAs, justifying the use of a random-slopes model. 
 
-To begin examining the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{1j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. From this, we can derive *.
+```{r}
+summary(model.var.slope)
+```
+
+To begin examining the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{1j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. A priori, this plot conforms with conventional wisdom: MSOAs with higher-than-average median log housing prices * as shown in the bottom-right quadrant. Interestingly, in the bottom-left quadrant, we observe an MSOA *.
 
 ```{r, fig.cap = "\\label{fig:slope}Income deprivation slopes versus intercept."}
 # data object containing random slope and intercepts
@@ -604,8 +600,20 @@ abline(v = 0, col = "red")
 To produce 
 
 ```{r}
+# extract model fitted values
 predicteds <- fitted(model.var.slope)
 
+data.predicted <- cbind(median_val = predicteds, lr_income = lsoa.join$lr_income, msoa = lsoa.join$MSOA11CD)
+
+data.predicted <- data.frame(unique(data.predicted))
+data.predicted$median_val <- as.numeric(data.predicted$median_val)
+data.predicted$lr_income <- as.numeric(data.predicted$lr_income)
+
+data.predicted <- data.predicted[order(data.predicted$msoa, data.predicted$lr_income), ]
+data.predicted$multinc <- rep(0, dim(data.predicted)[1])
+data.predicted$multinc[data.predicted$msoa %in% unique(data.predicted$msoa[duplicated(data.predicted$msoa)])] <- 1
+
+xyplot(median_val ~ lr_income, data = data.predicted[data.predicted$multinc == 1, ], groups = msoa, type = c("p", "l"), col = "blue")
 ```
 
 
@@ -615,7 +623,13 @@ msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
 ```
 
-<!-- RANDOM SLOPES TABLE -->
+With our interest in space, 
+
+```{r}
+
+
+```
+
 
 \subsection{Interpretation}
 
