@@ -397,13 +397,6 @@ From \autoref{tab:zone}, we demonstrate the zoning problem: with 10 aggregation 
 
 Having demonstrated the MAUP, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the scale geographies. Firstly, we aggregate the median price paid per property for each LSOA:
 
-<!-- 1) JOIN CSVS TO MAIN SHAPEFILE TO MAKE IT LOOK BETTER LOL-->
-
-<!-- 3) RANDOM SLOPES - JUSTIFY USE WITH FACET_WRAP PLOT (WEDNESDAY) -->
-
-<!-- 4) RESULTS (THURSDAY) -->
-
-
 ```{r, eval=FALSE}
 # save location to tmp folder
 temp <- "/tmp/lpool_pp.csv"
@@ -475,9 +468,6 @@ lsoa.join$md_2015 <- as.numeric(lsoa.join$md_2015)
 lsoa.join$md_2015 <- log(lsoa.join$md_2015)
 # take only complete cases
 lsoa.join <- lsoa.join[complete.cases(lsoa.join),]
-
-# proportion over 65
-
 ```
  
 \subsection{Model specification}
@@ -492,13 +482,11 @@ where the mean $\mu _\alpha$ and standard deviation $\sigma _\alpha$ derived fro
 
 To begin decomposing how median log housing prices vary by LSOA and MSOA geographies, we specify the following null multilevel model:
 
-$$ y_{i,j} = \alpha_{0,j} + \epsilon_{i,j} $$
+$$ y_{ij} = \alpha_{0,j} + \epsilon_{ij} $$
 
-$$ \alpha_{0,j} = \alpha_0 + \mu_{0,j} $$
+$$ \alpha_{0j} = \alpha_0 + \mu_{0j} $$
 
-where in the first level, $y_{i,j}$ is the median logged housing price for the $i^{th}$ LSOA in MSOA $j$, $\alpha_{0,j}$ is the MSOA-level mean of $y_{i,j}$ (varying intercept) for the $j^{th}$ MSOA, and $\epsilon_{i,j}$ is the residual error term assumed i.i.d; where in the second level, $\alpha_0$ is the overall intercept, and finally $\mu_{0,j}$ is the random error component for the deviation of the intercept of the $j^{th}$ group from the overall intercept.
-
-<!--  JUSTIFY NULL MODEL HERE -->
+where in the first level, $y_{ij}$ is the median logged housing price for the $i^{th}$ LSOA in MSOA $j$, $\alpha_{0j}$ is the MSOA-level mean of $y_{ij}$ (varying intercept) for the $j^{th}$ MSOA, and $\epsilon_{ij}$ is the residual error term assumed i.i.d; where in the second level, $\alpha_0$ is the overall intercept, and finally $\mu_{0j}$ is the random error component for the deviation of the intercept of the $j^{th}$ group from the overall intercept.
 
 ```{r null model, results="hide"}
 # ----------- NULL MODEL ------------
@@ -525,7 +513,15 @@ https://www.cmm.bris.ac.uk/lemma/pluginfile.php/7973/mod_resource/content/1/R-5.
 
 Overall, we estimate mean attainment (across MSOAs) as *. The mean for the $j^{th}$ MSOA is estimated as $30.60 + \mu_{0,j}$, where $\mu_{0,j}$ is the MSOA-level residual\footnote{For MSOA ** DO EXAMPLE HERE}. 
 
-Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs. This infers the presence of spatial heterogeneity between MSOAs, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies.
+Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs, and ~40% within. This infers the presence of spatial heterogeneity between MSOAs, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies. 
+
+Following this, we estimate 
+
+```{r}
+# store MSOA-level residuals
+u0 <- ranef(model.null, condVar = TRUE)
+u0se <- sqrt(attr(u0[[1]], "postVar")[1, , ])
+```
 
 ```{r}
 # catepillar graph to visualise mean of each MSOA random effect
@@ -543,8 +539,6 @@ To rationalise a varying intercept and slope model, we assess the variability be
 \caption{Variability in income deprivation by median log housing price for 20 sampled MSOAs.}
 \label{fig:varib}
 \end{figure}
-
-<!-- INFORM WITH DEFINITION OF ERROR TERMS FROM SLIDES -->
 
 As \autoref{fig:varib} demonstrates variance between median logged housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model\footnote{-2 log likelihood test also concluded **.}. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor [@Gelman]. This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
 
@@ -580,13 +574,13 @@ model.var.slope.fit <- lmer(md_2015 ~ lr_crime
 anova(model.var.slope, model.var.slope.fit)
 ```
 
-Firstly, we use a likelihood ratio test derived from an ANOVA table to estimate whether the income deprivation effect varies across MSOAs. As the deduction of the log-likelihood values computes a likelihood ratio value of 67.47 on 2 degrees of freedom, we can infer the income deprivation effect varies across MSOAs, justifying the use of a random-slopes model. 
+Firstly, we use a likelihood ratio test derived from an ANOVA table to estimate whether the income deprivation effect varies across MSOAs. As the deduction of the log-likelihood values computes a likelihood ratio value of `67.47` on 2 degrees of freedom, we can infer the income deprivation effect varies across MSOAs, justifying the use of a random-slopes model. 
 
 ```{r}
 summary(model.var.slope)
 ```
 
-To begin examining the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{1j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. A priori, this plot conforms with conventional wisdom: MSOAs with higher-than-average median log housing prices * as shown in the bottom-right quadrant. Interestingly, in the bottom-left quadrant, we observe an MSOA *.
+To begin examining the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{1j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. Intuitively, this plot conforms with conventional wisdom: MSOAs with higher-than-average median log housing prices also have below-average slopes for income deprivation as shown in the bottom-right quadrant. Interestingly, in the bottom-left quadrant, we observe an MSOA *. 
 
 ```{r, fig.cap = "\\label{fig:slope}Income deprivation slopes versus intercept."}
 # data object containing random slope and intercepts
@@ -597,41 +591,48 @@ abline(h = 0, col = "red")
 abline(v = 0, col = "red")
 ```
 
-To produce 
+To produce the equation for the fitted regression line of MSOA $j$, we estimate: $\hat{y} _{ij} =  (11.36 + \hat{\mu}_{0j}) + (-0.12 + \hat{\mu_{2j}})\textnormal{lr\_income}_{ij}$ where `11.36` and `-0.12` are derived from * and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot in \autoref{fig:slope}.
 
 ```{r}
-# extract model fitted values
-predicteds <- fitted(model.var.slope)
-
-data.predicted <- cbind(median_val = predicteds, lr_income = lsoa.join$lr_income, msoa = lsoa.join$MSOA11CD)
-
-data.predicted <- data.frame(unique(data.predicted))
-data.predicted$median_val <- as.numeric(data.predicted$median_val)
-data.predicted$lr_income <- as.numeric(data.predicted$lr_income)
-
-data.predicted <- data.predicted[order(data.predicted$msoa, data.predicted$lr_income), ]
-data.predicted$multinc <- rep(0, dim(data.predicted)[1])
-data.predicted$multinc[data.predicted$msoa %in% unique(data.predicted$msoa[duplicated(data.predicted$msoa)])] <- 1
-
-xyplot(median_val ~ lr_income, data = data.predicted[data.predicted$multinc == 1, ], groups = msoa, type = c("p", "l"), col = "blue")
-```
-
-
-```{r, eval=FALSE}
 # create caterpillar graph 
 msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
 ```
 
-With our interest in space, 
+With our interest in space, we conclude this paper by displaying the spatial distribution of random slopes in \autoref{fig:spplot} using `spplot` for the presentation layer.
 
-```{r}
+```{r spplot, fig.cap = "\\label{fig:spplot}Income deprivation slopes versus intercept."}
+setwd("/Users/samcomber/Documents/spatial_analysis/shp/spatial_join")
+msoa <- readOGR(dsn = ".", layer = "msoa", stringsAsFactors = FALSE)
+msoa_code <- msoa.rand[msoa.rand$term == "(Intercept)", "groupID"]
+msoa_intercept <- msoa.rand[msoa.rand$term == "(Intercept)", "mean"]
+msoa_slope <- msoa.rand[msoa.rand$term == "lr_income", "mean"]
+msoa_link <- data.frame(msoa_code, msoa_intercept, msoa_slope)
+msoa_link$msoa_code <- as.character(msoa_link$msoa_code)
+msoa@data <- merge(msoa@data, msoa_link, by.x = "MSOA11CD", by.y = "msoa_code", all.x = TRUE)
 
+temp <- msoa@data$msoa_slope
+brks.temp <- classIntervals(temp, n = 5, style = "quantile")
+brks.temp <- round(brks.temp$brks, digits = 2)
+brks.temp[1] <- brks.temp[1] - 0.01
+brks.temp[5 + 1] <- brks.temp[5 + 1] + 0.01
+
+# get bounding box
+xx <- msoa@bbox
+
+# build scale bar
+scalebar <- list("SpatialPolygonsRescale", layout.scale.bar(),
+            offset = c(min(xx[1,] + 1000),xx[2,1] + 1000), scale = 5000,    fill=c("transparent","black"))
+
+text1 <- list("sp.text", c(min(xx[1,]) + 1000,xx[2,1] + 1500), "0")
+text2 <- list("sp.text", c(min(xx[1,]) + 6000,xx[2,1] + 1500), "5 km")
+northarrow <- list("SpatialPolygonsRescale", layout.north.arrow(),
+                     offset = c(min(xx[1,]) + 2000,xx[2,1] + 2000), scale = 1500)
+
+
+spplot(msoa, "msoa_slope", sp.layout = list(scalebar, text1, text2, northarrow), at = brks.temp, col.regions = brewer.pal(5, "PuBu"), col="transparent", pretty=TRUE, colorkey=list(labels=list(at=brks.temp)))
 
 ```
-
-
-\subsection{Interpretation}
 
 \section{Bibliography}
 \section{Appendix}
