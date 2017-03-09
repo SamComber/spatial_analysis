@@ -462,7 +462,7 @@ Firstly, we use a likelihood ratio test derived from an ANOVA table to estimate 
 summary(model.var.slope)
 ```
 
-To begin interpreting the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{2j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. In all, the plot displays no systematic patterning between the slope and intercept as the number of MSOAs within each quadrant is almost equal. This infers a lack of distinctive between-group patterning for the income deprivation slope and intercept.
+To begin interpreting the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{2j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. In all, the plot displays no systematic patterning between the slope and intercept. This is because the number of MSOAs within each quadrant is almost equal. This infers a lack of distinctive between-group patterning for the income deprivation slope and intercept across all MSOAs in Liverpool.
 
 ```{r, fig.cap = "\\label{fig:slope}Income deprivation slopes versus intercept."}
 # data object containing random slope and intercepts
@@ -475,7 +475,7 @@ abline(v = 0, col = "red")
 
 In all, the mean fixed effect slope for `lr_income` infers that every one-unit increase in the percentage of income deprivation decreases median housing values by 25.1\%\footnote{Median housing values are logged so the coefficients are interpreted as percentage increases.}. As we do not allow `lr_income` to vary by group, we can interpret the coefficient as stating for every one-unit increase in the percentage of crime deprivation, median housing values decrease by 0.42\%. In this way, one might conclude income deprivation has a greater effect size on median housing values than crime deprivation. To produce the equation for the fitted regression line of MSOA $j$, one can solve: $\hat{y} _{ij} =  (12.22 + \hat{\mu}_{0j}) + (-0.04)\textnormal{lr\_crime} + (-2.50 + \hat{\mu_{2j}})\textnormal{lr\_income}$ where `12.22`, `-0.04` and `-2.50` are derived from the fixed effects estimates of the intercept `lr_crime` and `lr_income`, respectively, and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot for each MSOA in \autoref{fig:slope}. 
 
-Next, we compute a caterpillar plot in \autoref{fig:caterpillar} to display the MSOA effects in rank order. From this plot, we observe how the random intercepts does not seem to vary significantly with eachother as indicated by the overlapping 95\% confidence intervals with the exception of one MSOA. Moreover, the effects of income deprivation on median log housing prices does not seem to vary significantly across MSOAs: positive and negative effects are observed, yet they are not significantly different between MSOAs. This infers the absence of between-group significant variance in the effect of income deprivation on median log housing values.
+Next, we compute a caterpillar plot in \autoref{fig:caterpillar} to display the MSOA effects in rank order. From this plot, we observe how the random intercepts do not seem to vary significantly with eachother as indicated by the overlapping 95\% confidence intervals with the exception of one MSOA. Moreover, the effects of income deprivation on median log housing prices do not seem to vary significantly across MSOAs: positive and negative effects are observed, yet they are not significantly different between MSOAs. This infers the absence of between-group significant variance in the effect of income deprivation on median log housing values.
 
 ```{r catepillar, fig.cap = "\\label{fig:caterpillar}Mean of MSOA random effect with 95% confidence interval."}
 # create caterpillar graph 
@@ -483,7 +483,7 @@ msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
 ```
 
-Finally, we construct * in \autoref{fig:fan} to illustrate the 'fanning out' of prediction lines.
+Finally, we compute \autoref{fig:fan} to illustrate the 'fanning out' of prediction lines. Mostly, MSOAs are shown to have a negative slope which supports the theoretical expectation between income deprivation and median housing values. The positive covariance between the intercept and slopes implies that MSOAs with a large negative intercept tend to have a steep slope (stronger negative relationship between income deprivation and median housing values).
 
 ```{r fan, fig.cap = "\\label{fig:fan}Fanning of prediction lines from random-slope model."}
 # extract model fitted values
@@ -510,9 +510,9 @@ xyplot(median_val ~ lr_income, data = data.predicted[data.predicted$multinc == 1
 ```
 
 \newpage
-\subsection{Spatiality of random-slopes}
+\subsection{Spatial distribution of random-slopes}
 
-Given our interest in space, we conclude this paper by briefly displaying the spatial distribution of random slopes in \autoref{fig:spplot} using `spplot` for the presentation layer. From this, we observe the spatiality of slope coefficients for income deprivation across Liverpool. In terms of spatial patterning, one can observe clusters of the highest coefficients amongst MSOAs to the West of Liverpool. This infers that within these MSOAs, increasing income deprivation somewhat counterintuitively increased median housing values\footnote{This may be due to confounding factors not captured by the multilevel model.}. By contrast, MSOAs around the center of the Liverpool metropolitan area conform with what one would assume a priori: increasing income deprivation causes median housing values to fall.
+Given our interest in space, we conclude this paper by briefly displaying the spatial distribution of random slopes in \autoref{fig:spplot} using `spplot` for the presentation layer. From this, we observe the spatial distribution of slope coefficients for income deprivation across Liverpool. In terms of spatial patterning, one can observe clusters of the highest coefficients amongst MSOAs to the West of Liverpool. This infers that within these MSOAs, increasing income deprivation somewhat counterintuitively increased median housing values\footnote{This may be due to confounding factors not captured by the multilevel model.}. By contrast, MSOAs around the center of the Liverpool metropolitan area conform with what one would assume a priori: increasing income deprivation causes median housing values to fall.
 
 ```{r spplot, fig.cap = "\\label{fig:spplot}Spatial patterning of varying slopes for income deprivation at MSOA scale.", echo=FALSE, results="hide", warning=FALSE}
 setwd("/Users/samcomber/Documents/spatial_analysis/shp/spatial_join")
