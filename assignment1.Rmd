@@ -473,7 +473,7 @@ abline(h = 0, col = "red")
 abline(v = 0, col = "red")
 ```
 
-In all, the mean fixed effect slope for `lr_income` infers that every one-unit increase in the percentage of income deprivation decreases median housing values by 25.1\%\footnote{Median housing values are logged so the coefficients are interpreted as percentage increases.}. As we do not allow `lr_income` to vary by group, we can interpret the coefficient as stating for every one-unit increase in the percentage of crime deprivation, median housing values decrease by 0.42\%. In this way, one might conclude income deprivation has a greater effect size on median housing values than crime deprivation. To produce the equation for the fitted regression line of MSOA $j$, one can solve: $\hat{y} _{ij} =  (12.22 + \hat{\mu}_{0j}) + (-0.04)\textnormal{lr\_crime} + (-2.50 + \hat{\mu_{2j}})\textnormal{lr\_income}$ where `12.22`, `-0.04` and `-2.50` are derived from the fixed effects estimates of the intercept `lr_crime` and `lr_income`, respectively, and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot for each MSOA in \autoref{fig:slope}. 
+In all, the mean fixed effect slope for `lr_income` infers that every one-unit increase in the percentage of income deprivation decreases median housing values by 25.1\%\footnote{Median housing values are logged so the coefficients are interpreted as percentage increases.}. As we do not allow `lr_income` to vary by group, we can interpret the coefficient as stating for every one-unit increase in the percentage of crime deprivation, median housing values decrease by 0.42\%. In this way, one might conclude income deprivation has a greater effect size on median housing values than crime deprivation. To produce the equation for the fitted regression line of MSOA $j$, one can solve: $\hat{y} _{ij} =  (12.22 + \hat{\mu}_{0j}) + (-0.04)\textnormal{lr\_crime} + (-2.50 + \hat{\mu_{2j}})\textnormal{lr\_income}$ where `12.22`, `-0.04` and `-2.50` are derived from the fixed effects estimates of the intercept, `lr_crime` and `lr_income`, respectively, and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot for each MSOA in \autoref{fig:slope}. 
 
 Next, we compute a caterpillar plot in \autoref{fig:caterpillar} to display the MSOA effects in rank order. From this plot, we observe how the random intercepts do not seem to vary significantly with eachother as indicated by the overlapping 95\% confidence intervals with the exception of one MSOA. Moreover, the effects of income deprivation on median log housing prices do not seem to vary significantly across MSOAs: positive and negative effects are observed, yet they are not significantly different between MSOAs. This infers the absence of between-group significant variance in the effect of income deprivation on median log housing values.
 
@@ -483,9 +483,9 @@ msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
 ```
 
-Finally, we compute \autoref{fig:fan} to illustrate the 'fanning out' of prediction lines. Mostly, MSOAs are shown to have a negative slope which supports the theoretical expectation between income deprivation and median housing values. The positive covariance between the intercept and slopes implies that MSOAs with a large negative intercept tend to have a steep slope (stronger negative relationship between income deprivation and median housing values).
+Finally, we compute \autoref{fig:fan} to illustrate the 'fanning in' of prediction lines. Mostly, MSOAs are shown to have a negative slope which supports the theoretical expectation between income deprivation and median housing values. The positive covariance between the intercept and slopes implies that MSOAs with a large negative intercept tend to have a steep slope (a stronger negative relationship between income deprivation and median housing values).
 
-```{r fan, fig.cap = "\\label{fig:fan}Fanning of prediction lines from random-slope model."}
+```{r fan, fig.cap = "\\label{fig:fan}'Fanning in' of prediction lines from random-slope model."}
 # extract model fitted values
 predicteds <- fitted(model.var.slope)
 
@@ -504,9 +504,9 @@ data.predicted$multinc[data.predicted$msoa
                        %in% unique(data.predicted$msoa[
                          duplicated(data.predicted$msoa)])] <- 1
 
-# visualise fanning out of prediction lines
+# visualise fanning of prediction lines
 xyplot(median_val ~ lr_income, data = data.predicted[data.predicted$multinc == 1, ], 
-       groups = msoa, type = c("p", "l"), col = "#FF0000")
+       groups = msoa, type = c( "l"), col = "#FF0000")
 ```
 
 \newpage
