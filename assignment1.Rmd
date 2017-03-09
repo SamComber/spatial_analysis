@@ -443,31 +443,52 @@ print(vc,comp=c("Variance"))
 print(paste0(round(0.18341 / (0.18341 + 0.12261), 3),"%"))
 ```
 
-<!--
-
-REGRESSION TABLE HERE 
-
-https://www.cmm.bris.ac.uk/lemma/pluginfile.php/7973/mod_resource/content/1/R-5.pdf
-
--->
-
-Overall, we estimate mean attainment (across MSOAs) as *. The mean for the $j^{th}$ MSOA is estimated as $30.60 + \mu_{0,j}$, where $\mu_{0,j}$ is the MSOA-level residual\footnote{For MSOA ** DO EXAMPLE HERE}. 
-
 Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs, and ~40% within. This infers the presence of spatial heterogeneity between MSOAs, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies. 
 
-Following this, we estimate 
+Following this, we calculate rankings of  .From \autoref{tab:rank}, 
+
 
 ```{r}
 # store MSOA-level residuals
 u0 <- ranef(model.null, condVar = TRUE)
 u0se <- sqrt(attr(u0[[1]], "postVar")[1, , ])
+
+# get msoa ids
+msoa.id <- rownames(u0[[1]])
+# column bind ids, residuals and standard errors
+u0tab <- cbind(msoa.id, u0[[1]], u0se)
+# rename columns
+colnames(u0tab) <- c("msoa.id", "u0", "u0se")
+# sort table by residuals
+u0tab <- u0tab <- u0tab[order(u0tab$u0), ]
+
+# create ranking
+u0tab <- cbind(u0tab, c(1:dim(u0tab)[1]))
+# rename column to rank
+colnames(u0tab)[4] <- "u0rank"
+# order by msoa id
+u0tab <- u0tab[order(u0tab$msoa.id),]
 ```
 
-```{r}
-# catepillar graph to visualise mean of each MSOA random effect
-msoa.rand.eff <- REsim(model.null)
-p <- plotREsim(msoa.rand.eff)
-```
+\begin{table}[!htbp]
+\begin{center}
+\caption{Ranking of for MSOAs} \label{tab:rank}
+\begin{tabular}{@{} *5l @{}}    \toprule
+\emph{MSOA id} & \emph{u0} & \emph{u0se} & \emph{u0 rank} &  \\\midrule
+ E02001347  & -0.3636 & 0.2144 & 11\\ 
+ E02001348  & 0.0015 & 0.1621 & 27\\ 
+ E02001349  & 0.0300 & 0.1356 & 28\\ 
+ E02001350  & -0.4477 & 0.1621 & 5\\ 
+ E02001351  & -0.1039 & 0.2711 & 21\\ 
+ E02001352  & -0.0924 & 0.1621 & 22\\ 
+ E02001353  & -0.0829 & 0.1471 & 25\\ 
+ E02001355  & -0.2823 & 0.1471 & 13\\ 
+ E02001357  & -0.3988 & 0.1621  & 8\\ 
+ E02001358 & -0.5902 &  0.1828 & 3\\\bottomrule
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \subsection{Random-slopes model}
 
@@ -480,7 +501,7 @@ To rationalise a varying intercept and slope model, we assess the variability be
 \label{fig:varib}
 \end{figure}
 
-As \autoref{fig:varib} demonstrates variance between median logged housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model\footnote{-2 log likelihood test also concluded **.}. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor [@Gelman]. This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
+As \autoref{fig:varib} demonstrates variance between median logged housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor [@Gelman]. This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
 
 $$ y_{ij} = \alpha _{ij} + \beta _{1}x_{1,ij} + \beta _{2j}x_{2,ij} + \epsilon _{0,ij}$$
 
@@ -531,9 +552,11 @@ abline(h = 0, col = "red")
 abline(v = 0, col = "red")
 ```
 
-To produce the equation for the fitted regression line of MSOA $j$, one can solve: $\hat{y} _{ij} =  (11.36 + \hat{\mu}_{0j}) + (-0.12 + \hat{\mu_{2j}})\textnormal{lr\_income}_{ij}$ where `11.36` and `-0.12` are derived from * and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot in \autoref{fig:slope}.
+To produce the equation for the fitted regression line of MSOA $j$, one can solve: $\hat{y} _{ij} =  (11.36 + \hat{\mu}_{0j}) + (-0.12 + \hat{\mu_{2j}})\textnormal{lr\_income}_{ij}$ where `11.36` and `-0.12` are derived from the fixed effects estimates of the intercept and `lr_crime` derived from `summary(model.var.slope)` and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot in \autoref{fig:slope}. 
 
-```{r}
+Finally, we compute a caterpillar plot in \autoref{fig:caterpillar} to display the MSOA effects in rank order 
+
+```{r catepillar, fig.cap = "\\label{fig:caterpillar}Mean of MSOA random effect with 95% confidence interval."}
 # create caterpillar graph 
 msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
