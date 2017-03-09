@@ -18,21 +18,18 @@ header-includes:
 
 <!-- introduce problem -->
 
-Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena [@Openshaw]. Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results to the definition of units for which data are collected." According to the literature, the MAUP constrains the reliability of analyses for aggregated spatial data, as findings have shown varying results with the scale of aggregation and configuration of zoning systems [@ClarkAvery].
+Areal units in zoning systems amalgamate into objects that constitute the basic units for the observation and analysis of spatial phenomena (Openshaw, 1984). Yet, no gold standard for guiding the spatial aggregation process exists, with the validity of zonal objects subject to the arbitrary and modifiable decision-making of quantitative geographers. Problematically, the analysis of socioeconomic data involving areal units is encumbered by the modifiable areal unit problem (MAUP): "the sensitivity of analytical results to the definition of units for which data are collected." According to the literature, the MAUP constrains the reliability of analyses for aggregated spatial data, as findings have shown varying results with the scale of aggregation and configuration of zoning systems (Clark and Avery, 1976).
 
-<!-- zoning problem + examples -->
-<!-- aggregation problem + examples -->
+In practice, the MAUP is condensed into two issues of scale and zoning sensitivity which this paper will attempt to demonstrate in Section \ref{maup}. The first issue, described as the *scale problem*, is the variation in findings when data for zonal units are progressively aggregated. This has been demonstrated empirically by Clark and Avery (1976) who found that whilst correlation coefficients did not increase monotonically with aggregation\footnote{At higher levels of aggregation, there is smaller adjacency of zonal units meaning groupings are more heterogenous leading to lower correlation coefficients.}, a general increase in data aggregation corresponds to an increase in correlation coefficients. 
 
-In practice, the MAUP is condensed into two issues of scale and zoning sensitivity which this paper will attempt to demonstrate in Section \ref{maup}. The first issue, described as the *scale problem*, is the variation in findings when data for zonal units are progressively aggregated. This has been demonstrated empirically by @ClarkAvery who found that whilst correlation coefficients did not increase monotonically with aggregation\footnote{At higher levels of aggregation, there is smaller adjacency of zonal units meaning groupings are more heterogenous leading to lower correlation coefficients.}, a general increase in data aggregation corresponds to an increase in correlation coefficients. 
-
-The second issue, the *zoning problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed with the scale or number of units held constant [@Openshaw]. Zoning sensitivity in multivariate analysis has been demonstrated empirically in @FotheringhamWong who simulated the aggregation of 871 block groups into 218 zones in 150 different iterations. They highlight the severity of the zoning problem by demonstrating the possibility of concluding with one iteration of zones no association between the percentage of blue-collar workers and mean family income, with another iteration finding a unit increase in blue-collar worker percentages as reducing mean family income by \$20,000. In all, ignoring scale and zoning sensitivity in model calibration can lead to inferential conclusions that a researcher's areal data is applicable to the constituents who form the zones under study - the ecological fallacy problem [@Openshaw].
+The second issue, the *zoning problem*, pertains to the variation in findings when alternative combinations of zonal units are analysed with the scale or number of units held constant (Openshaw, 1984). Zoning sensitivity in multivariate analysis has been demonstrated empirically in Fotheringham and Wong (1991) who simulated the aggregation of 871 block groups into 218 zones in 150 different iterations. They highlight the severity of the zoning problem by demonstrating the possibility of concluding with one iteration of zones no association between the percentage of blue-collar workers and mean family income, with another iteration finding a unit increase in blue-collar worker percentages as reducing mean family income by \$20,000. In all, ignoring scale and zoning sensitivity in model calibration can lead to inferential conclusions that a researcher's areal data is applicable to the constituents who form the zones under study - the ecological fallacy problem (Openshaw, 1984).
 
 \subsection{Demonstrating the MAUP}
 \label{maup}
 
 \subsubsection{Data}
 
-To demonstrate the scaling and zoning sensitivities of the MAUP, we calculate the bivariate strength of association between two open data variables. For our first variable, *crime_count*, we submit a HTTP request using the POST verb to send a custom polygon for retrieving all street-level crimes occuring in 2012. 
+To demonstrate the scaling and zoning sensitivities of the MAUP, we calculate the bivariate strength of association between two open data variables. For our first variable, *crime_count*, we submit a HTTP request using the POST verb to send a custom polygon for retrieving all street-level crimes occuring in 2012\footnote{For brevity, the code which binds the monthly dataframes together is moved to the Appendix.}. 
 
 ```{r dependencies, include=FALSE}
 library(downloader)
@@ -80,81 +77,6 @@ document <- lapply(dates, function(month) {
 })
 ```
 
-```{r hidden_render, eval=FALSE, include=FALSE}
-# build master data.frame to append data.frame for individual months to
-master <- data.frame(id=numeric(0), category=character(0), lat=character(0),
-                     lon=character(0), month=character(0), outcome_status=character(0))
-
-d1 <- data.frame(category=document[[1]]$category,lat=document[[1]]$location$latitude,
-                 lon=document[[1]]$location$longitude, id=document[[1]]$id, 
-                 name=document[[1]]$location$street$name, month=document[[1]]$month,
-                 outcome_status=document[[1]]$outcome_status$category)
-
-d2 <- data.frame(category=document[[2]]$category,lat=document[[2]]$location$latitude,
-                 lon=document[[2]]$location$longitude, id=document[[2]]$id,
-                 name=document[[2]]$location$street$name, month=document[[2]]$month,
-                 outcome_status=document[[2]]$outcome_status$category)
-
-d3 <- data.frame(category=document[[3]]$category,lat=document[[3]]$location$latitude,
-                 lon=document[[3]]$location$longitude, id=document[[3]]$id,
-                 name=document[[3]]$location$street$name, month=document[[3]]$month,
-                 outcome_status=document[[3]]$outcome_status$category)
-
-d4 <- data.frame(category=document[[4]]$category,lat=document[[4]]$location$latitude,
-                 lon=document[[4]]$location$longitude, id=document[[4]]$id,
-                 name=document[[4]]$location$street$name, month=document[[4]]$month,
-                 outcome_status=document[[4]]$outcome_status$category)
-
-d5 <- data.frame(category=document[[5]]$category,lat=document[[5]]$location$latitude,
-                 lon=document[[5]]$location$longitude, id=document[[5]]$id,
-                 name=document[[5]]$location$street$name, month=document[[5]]$month,
-                 outcome_status=document[[5]]$outcome_status$category)
-
-d6 <- data.frame(category=document[[6]]$category,lat=document[[6]]$location$latitude,
-                 lon=document[[6]]$location$longitude, id=document[[6]]$id,
-                 name=document[[6]]$location$street$name, month=document[[6]]$month,
-                 outcome_status=document[[6]]$outcome_status$category)
-
-d7 <- data.frame(category=document[[7]]$category,lat=document[[7]]$location$latitude,
-                 lon=document[[7]]$location$longitude, id=document[[7]]$id,
-                 name=document[[7]]$location$street$name, month=document[[7]]$month,
-                 outcome_status=document[[7]]$outcome_status$category)
-
-d8 <- data.frame(category=document[[8]]$category,lat=document[[8]]$location$latitude,
-                 lon=document[[8]]$location$longitude, id=document[[8]]$id,
-                 name=document[[8]]$location$street$name, month=document[[8]]$month,
-                 outcome_status=document[[8]]$outcome_status$category)
-
-d9 <- data.frame(category=document[[9]]$category,lat=document[[9]]$location$latitude,
-                 lon=document[[9]]$location$longitude, id=document[[9]]$id,
-                 name=document[[9]]$location$street$name, month=document[[9]]$month,
-                 outcome_status=document[[9]]$outcome_status$category)
-
-d10 <- data.frame(category=document[[10]]$category,lat=document[[10]]$location$latitude,
-                  lon=document[[10]]$location$longitude, id=document[[10]]$id,
-                  name=document[[10]]$location$street$name, month=document[[10]]$month,
-                  outcome_status=document[[10]]$outcome_status$category)
-
-d11 <- data.frame(category=document[[11]]$category,lat=document[[11]]$location$latitude,
-                  lon=document[[11]]$location$longitude, id=document[[11]]$id,
-                  name=document[[11]]$location$street$name, month=document[[11]]$month,
-                  outcome_status=document[[11]]$outcome_status$category)
-
-d12 <- data.frame(category=document[[12]]$category,lat=document[[12]]$location$latitude,
-                  lon=document[[12]]$location$longitude, id=document[[12]]$id,
-                  name=document[[12]]$location$street$name, month=document[[12]]$month,
-                  outcome_status=document[[12]]$outcome_status$category)
-
-# rbind each month to master data.frame
-document <- rbind(master, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12)
-# document <- rbind(master, d1, d2)
-
-# take a sample from population
-document <- document[sample(nrow(document), 45000),]
-# convert factors to chr class
-document <- rapply(document, as.character, classes="factor", how="replace")
-```
-
 ```{r, eval=FALSE}
 # cast lat/lon columns to numeric data type
 document$lat <- as.numeric(document$lat)
@@ -196,7 +118,7 @@ tweets@coords[,2] <- lats
 tweets <- tweets[sample(nrow(tweets), 500), ]
 ```
 
-To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. We investigate the scaling problem using an iterative process that increments the number of regions in a hex-binned lattice from 10 to 100 (stepping each iteration by 10 regions). To demonstrate the zoning problem we constrain cardinality - i.e. the number of regions - to 30, and calculate correlation coefficients using 10 different permutations of 30 regions. To build random regions, we use the multiple aggregatons feature in IMAGE studio [@KDaras] which uses a depth-first search algorithm for a given contiguity matrix to create aggregated spatial regions. We then dissolve regions with the `unionSpatialPolygons` using the generated `ZoneID` for aggregations.
+To demonstrate the MAUP, we aggregate a count of each crime and tweet into separate variables for each region in the shapefile, before computing correlations between the two vectors of values in the dataframe. We investigate the scaling problem using an iterative process that increments the number of regions in a hex-binned lattice from 10 to 100 (stepping each iteration by 10 regions). To demonstrate the zoning problem we constrain cardinality - i.e. the number of regions - to 30, and calculate correlation coefficients using 10 different permutations of 30 regions. To build random regions, we use the multiple aggregatons feature in IMAGE studio (Konstatinos, 2017) which uses a depth-first search algorithm for a given contiguity matrix to create aggregated spatial regions. We then dissolve regions with the `unionSpatialPolygons` using the generated `ZoneID` for aggregations.
 
 \subsubsection{Scale problem}
 
@@ -278,7 +200,7 @@ for (folder in folders) {
 \label{fig:scale}
 \end{figure}
 
-From \autoref{tab:scale}, we demonstrate the scaling problem. Generally, we observe rising correlations with increasing scale. Had the MAUP not existed, we would observe little systematic variation in the correlation between violent crime and tweets - we observe a difference of 0.36 between the upper and lower coefficients. Interestingly, we observe a correlation coefficient of 0.61 at 80 regions which lends evidence to @ClarkAvery findings that the low adjacency of zonal units at higher aggregations leads to lower correlation.
+From \autoref{tab:scale}, we demonstrate the scaling problem. Generally, we observe rising correlations with increasing scale. Had the MAUP not existed, we would observe little systematic variation in the correlation between violent crime and tweets - we observe a difference of 0.36 between the upper and lower coefficients. Interestingly, we observe a correlation coefficient of 0.61 at 80 regions which lends evidence to Clark and Avery's (1976) findings that the low adjacency of zonal units at higher aggregations leads to lower correlation.
 
 \begin{table}[!htbp]
 \begin{center}
@@ -395,9 +317,7 @@ From \autoref{tab:zone}, we demonstrate the zoning problem: with 10 aggregation 
 
 \section{Multilevel Modelling}
 
-Having demonstrated the MAUP, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the scale geographies. Firstly, we aggregate the median price paid per property for each LSOA:
-
-We then tidy the data, before log transforming median housing price per LSOA to relax the assumption of normality:
+Having demonstrated the MAUP, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the scale geographies. We use open data derived from the data.cdrc.ac.uk portal, in particular IMD 2015 and median house prices for 2015 data. LSOA and MSOA geographies are joined by location in `QGIS` as R lacks libraries for polygon in polygon joins. We begin by tiding the data, before log transforming median housing price per LSOA to relax the assumption of normality:
 
 ```{r data_prep, results="hide"}
 setwd("/Users/samcomber/documents/spatial_analysis/shp/spatial_join")
@@ -416,7 +336,7 @@ lsoa.join <- lsoa.join[complete.cases(lsoa.join),]
  
 \subsection{Null Model}
 
-Generally, our goal of estimation is the partial-pooling estimates of the median logged housing prices among all LSOAs in MSOA $j$. In our null model of no predictors, we approximate the multilevel estimate for MSOA $j$ as a weighted average of the mean of properties sold in the MSOA - an unpooled estimate $\hat{y}_j$ - and the mean across all MSOAs - the completely pooled estimate, $\hat{y}_\textnormal{all}$. As the weighted average uses information available about individual LSOAs, averages from MSOAs with a small number of constituent LSOAs carry less weighting, and so the multilevel estimate is pulled closer to Liverpool's overall average\footnote{In this way, the relative weights are determined by the sample size in the group and the variation within and between groups.} [@Gelman]. To allow this 'soft constraint' on $\alpha _j$, partial-pooling estimates are derived by assigning a probability distribution to the $\alpha_j$'s which pulls estimates of $\alpha _j$ some way towards their mean level $\mu _\alpha$ as below:
+Generally, our goal of estimation is the partial-pooling estimates of the median log housing prices among all LSOAs in MSOA $j$. In our null model of no predictors, we approximate the multilevel estimate for MSOA $j$ as a weighted average of the mean of properties sold in the MSOA - an unpooled estimate $\hat{y}_j$ - and the mean across all MSOAs - the completely pooled estimate, $\hat{y}_\textnormal{all}$. As the weighted average uses information available about individual LSOAs, averages from MSOAs with a small number of constituent LSOAs carry less weighting, and so the multilevel estimate is pulled closer to Liverpool's overall average\footnote{In this way, the relative weights are determined by the sample size in the group and the variation within and between groups.} (Gelman, 2007). To allow this 'soft constraint' on $\alpha _j$, partial-pooling estimates are derived by assigning a probability distribution to the $\alpha_j$'s which pulls estimates of $\alpha _j$ some way towards their mean level $\mu _\alpha$ as below:
 
 $$ \alpha_j \sim \mathcal{N}(\mu _\alpha,\,\sigma_{\alpha}^{2})\, \textnormal{for } j = 1, . . ., J, $$ 
 
@@ -426,7 +346,7 @@ $$ y_{ij} = \alpha_{0,j} + \epsilon_{ij} $$
 
 $$ \alpha_{0j} = \alpha_0 + \mu_{0j} $$
 
-where in the first level, $y_{ij}$ is the median logged housing price for the $i^{th}$ LSOA in MSOA $j$, $\alpha_{0j}$ is the MSOA-level mean of $y_{ij}$ (varying intercept) for the $j^{th}$ MSOA, and $\epsilon_{ij}$ is the residual error term assumed i.i.d; where in the second level, $\alpha_0$ is the overall intercept, and finally $\mu_{0j}$ is the random error component for the deviation of the intercept of the $j^{th}$ group from the overall intercept.
+where in the first level, $y_{ij}$ is the median log housing price for the $i^{th}$ LSOA in MSOA $j$, $\alpha_{0j}$ is the MSOA-level mean of $y_{ij}$ (varying intercept) for the $j^{th}$ MSOA, and $\epsilon_{ij}$ is the residual error term assumed i.i.d; where in the second level, $\alpha_0$ is the overall intercept, and finally $\mu_{0j}$ is the random error component for the deviation of the intercept of the $j^{th}$ group from the overall intercept.
 
 ```{r null model}
 # ----------- NULL MODEL ------------
@@ -445,8 +365,7 @@ print(paste0(round(0.18341 / (0.18341 + 0.12261), 3),"%"))
 
 Having observed a Variance Partition Coefficient (VPC) of `0.599`, we approximate ~60% of the variation in median log housing prices as explained by inequalities between MSOAs, and ~40% within. This infers the presence of spatial heterogeneity between MSOAs, which justifies the use of a multilevel model to simultaneously capture outcomes at LSOA and MSOA geographies. 
 
-Following this, we calculate rankings of  .From \autoref{tab:rank}, 
-
+Following this, we calculate rankings of posterior variance of each MSOA-level residual. From the values tabulated in \autoref{tab:rank}, we can observe that, for example, MSOA E02001347 had an estimated residual of `-0.3636` and was ranked 11 places from bottom. Hence, for E02001347, we estimate a mean log housing value of  `11.52383` `-` `-0.3636` = `11.8874` to 4 d.p.
 
 ```{r}
 # store MSOA-level residuals
@@ -472,7 +391,7 @@ u0tab <- u0tab[order(u0tab$msoa.id),]
 
 \begin{table}[!htbp]
 \begin{center}
-\caption{Ranking of for MSOAs} \label{tab:rank}
+\caption{Ranking of residuals for MSOAs.} \label{tab:rank}
 \begin{tabular}{@{} *5l @{}}    \toprule
 \emph{MSOA id} & \emph{u0} & \emph{u0se} & \emph{u0 rank} &  \\\midrule
  E02001347  & -0.3636 & 0.2144 & 11\\ 
@@ -501,7 +420,7 @@ To rationalise a varying intercept and slope model, we assess the variability be
 \label{fig:varib}
 \end{figure}
 
-As \autoref{fig:varib} demonstrates variance between median logged housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor [@Gelman]. This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
+As \autoref{fig:varib} demonstrates variance between median log housing prices and percentage of neighbourhood income deprivation, we are able to motivate the use of a random slope multilevel model. As observed, given random intercept models assume parallel grouping lines, they perform poorly at fitting the data. For this reason, we allow coefficients of explanatory variables to vary for each MSOA, which can be understood as interactions between group-level indicators and an individual-level predictor (Gelman, 2007). This is achieved by adding a random term to the coefficient of $x_k$ which relaxes the constraint of $\beta _k$ as fixed across each MSOA, allowing the coefficient to vary randomly across groups. We specify our random-slope model as follows:
 
 $$ y_{ij} = \alpha _{ij} + \beta _{1}x_{1,ij} + \beta _{2j}x_{2,ij} + \epsilon _{0,ij}$$
 
@@ -526,12 +445,14 @@ $$\begin{bmatrix}
 meaning the slope of regression line for MSOA $j$ is $\beta_2 + \mu_{ij}$, which allows the coefficient to vary by group. We define our random-slopes model in $R$ as follows:
 
 ```{r}
+# --------- RANDOM SLOPES MODEL -----------
 model.var.slope <- lmer(md_2015 ~ lr_crime 
                         + (1 + lr_income | MSOA11CD), data=lsoa.join, REML = FALSE)
 
 model.var.slope.fit <- lmer(md_2015 ~ lr_crime 
                         + (1 | MSOA11CD), data=lsoa.join,  REML = FALSE)
 
+# compute anova for likelihood ratio
 anova(model.var.slope, model.var.slope.fit)
 ```
 
@@ -562,6 +483,7 @@ msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
 ```
 
+\newpage
 \subsection{Space and conclusions}
 
 With our interest in space, we conclude this paper by displaying the spatial distribution of random slopes in \autoref{fig:spplot} using `spplot` for the presentation layer.
@@ -599,9 +521,88 @@ spplot(msoa, "msoa_slope", sp.layout = list(scalebar, text1, text2, northarrow),
 
 ```
 
+\newpage
 \section{Bibliography}
 
-* Openshaw, S. ()
-* 
+* Clark, W. and Avery, K. (1976) The effects of data aggregation in statistical analysis. <i>Geographical Analysis</i>, Vol.8 p-428-438.
+* Fotheringham A. and Wong, D. (1991) The Modifiable Areal Unit Problem in Multivariate Statistical Analysis. <i>Environment and planning A</i>. Vol. 23 (7), p.1025-1044.
+* Gelman, A. (2007) <i>Data Analysis using Regression and Multilevel/Hierarchical Models</i>. Cambridge University Press: Camrbidge.
+* Openshaw S, (1984) <i>The Modifiable Areal Unit Problem - Concepts and Techniques in Modern Geography</i>. Geo Books: Norwich. 
 
+\newpage
 \section{Appendix}
+
+```{r hidden_render, eval=FALSE}
+# build master data.frame to append data.frame for individual months to
+master <- data.frame(id=numeric(0), category=character(0), lat=character(0),
+                     lon=character(0), month=character(0), outcome_status=character(0))
+
+d1 <- data.frame(category=document[[1]]$category,lat=document[[1]]$location$latitude,
+                 lon=document[[1]]$location$longitude, id=document[[1]]$id, 
+                 name=document[[1]]$location$street$name, month=document[[1]]$month,
+                 outcome_status=document[[1]]$outcome_status$category)
+
+d2 <- data.frame(category=document[[2]]$category,lat=document[[2]]$location$latitude,
+                 lon=document[[2]]$location$longitude, id=document[[2]]$id,
+                 name=document[[2]]$location$street$name, month=document[[2]]$month,
+                 outcome_status=document[[2]]$outcome_status$category)
+
+d3 <- data.frame(category=document[[3]]$category,lat=document[[3]]$location$latitude,
+                 lon=document[[3]]$location$longitude, id=document[[3]]$id,
+                 name=document[[3]]$location$street$name, month=document[[3]]$month,
+                 outcome_status=document[[3]]$outcome_status$category)
+
+d4 <- data.frame(category=document[[4]]$category,lat=document[[4]]$location$latitude,
+                 lon=document[[4]]$location$longitude, id=document[[4]]$id,
+                 name=document[[4]]$location$street$name, month=document[[4]]$month,
+                 outcome_status=document[[4]]$outcome_status$category)
+
+d5 <- data.frame(category=document[[5]]$category,lat=document[[5]]$location$latitude,
+                 lon=document[[5]]$location$longitude, id=document[[5]]$id,
+                 name=document[[5]]$location$street$name, month=document[[5]]$month,
+                 outcome_status=document[[5]]$outcome_status$category)
+
+d6 <- data.frame(category=document[[6]]$category,lat=document[[6]]$location$latitude,
+                 lon=document[[6]]$location$longitude, id=document[[6]]$id,
+                 name=document[[6]]$location$street$name, month=document[[6]]$month,
+                 outcome_status=document[[6]]$outcome_status$category)
+
+d7 <- data.frame(category=document[[7]]$category,lat=document[[7]]$location$latitude,
+                 lon=document[[7]]$location$longitude, id=document[[7]]$id,
+                 name=document[[7]]$location$street$name, month=document[[7]]$month,
+                 outcome_status=document[[7]]$outcome_status$category)
+
+d8 <- data.frame(category=document[[8]]$category,lat=document[[8]]$location$latitude,
+                 lon=document[[8]]$location$longitude, id=document[[8]]$id,
+                 name=document[[8]]$location$street$name, month=document[[8]]$month,
+                 outcome_status=document[[8]]$outcome_status$category)
+
+d9 <- data.frame(category=document[[9]]$category,lat=document[[9]]$location$latitude,
+                 lon=document[[9]]$location$longitude, id=document[[9]]$id,
+                 name=document[[9]]$location$street$name, month=document[[9]]$month,
+                 outcome_status=document[[9]]$outcome_status$category)
+
+d10 <- data.frame(category=document[[10]]$category,lat=document[[10]]$location$latitude,
+                  lon=document[[10]]$location$longitude, id=document[[10]]$id,
+                  name=document[[10]]$location$street$name, month=document[[10]]$month,
+                  outcome_status=document[[10]]$outcome_status$category)
+
+d11 <- data.frame(category=document[[11]]$category,lat=document[[11]]$location$latitude,
+                  lon=document[[11]]$location$longitude, id=document[[11]]$id,
+                  name=document[[11]]$location$street$name, month=document[[11]]$month,
+                  outcome_status=document[[11]]$outcome_status$category)
+
+d12 <- data.frame(category=document[[12]]$category,lat=document[[12]]$location$latitude,
+                  lon=document[[12]]$location$longitude, id=document[[12]]$id,
+                  name=document[[12]]$location$street$name, month=document[[12]]$month,
+                  outcome_status=document[[12]]$outcome_status$category)
+
+# rbind each month to master data.frame
+document <- rbind(master, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12)
+# document <- rbind(master, d1, d2)
+
+# take a sample from population
+document <- document[sample(nrow(document), 45000),]
+# convert factors to chr class
+document <- rapply(document, as.character, classes="factor", how="replace")
+```
