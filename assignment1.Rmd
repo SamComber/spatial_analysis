@@ -397,62 +397,6 @@ From \autoref{tab:zone}, we demonstrate the zoning problem: with 10 aggregation 
 
 Having demonstrated the MAUP, we implement a two-level multilevel model that accounts for spatial heterogeneity effects between the scale geographies. Firstly, we aggregate the median price paid per property for each LSOA:
 
-```{r, eval=FALSE}
-# save location to tmp folder
-temp <- "/tmp/lpool_pp.csv"
-
-# download from source
-download.file(paste0("http://landregistry.data.gov.uk/app/ppd/ppd_data.csv
-                     ?et%5B%5D=lrcommon%3Afreehold&et%5B%5D=lrcommon%3Aleasehold
-                     &header=true&limit=all&max_date=31+December+2015
-                     &min_date=1+January+2015&nb%5B%5D=true&nb%5B%5D=false
-                     &ptype%5B%5D=lrcommon%3Adetached&ptype%5B%5D=lrcommon%3Asemi-detached
-                     &ptype%5B%5D=lrcommon%3Aterraced&ptype%5B%5D=lrcommon%
-                     3Aflat-maisonette&ptype%5B%5D=lrcommon%3AotherPropertyType
-                     &tc%5B%5D=ppd%3AstandardPricePaidTransaction
-                     &tc%5B%5D=ppd%3AadditionalPricePaidTransaction&town=",
-                     "Liverpool"), temp)
-
-# load LR data
-lr <- read.csv("/tmp/lpool_pp.csv",
-               stringsAsFactors = FALSE)
-
-# select only relevant columns
-lr <- dplyr::select(lr, price_paid, property_type, new_build, saon, paon, street,
-                    locality, town, postcode)
-
-# add concatenated column for geocoding
-lr.geocode <- mutate(lr, address = paste(saon, paon, street, locality, town, postcode))
-
-# drop previous columns
-lr.geocode <- dplyr::select(lr.geocode, -saon, -paon, -street, 
-                            -locality, -town, -postcode)
-
-# take sample to prevent API query limit from Google (2,500)
-lr.geocode.sample <- lr.geocode[sample(nrow(lr.geocode), 2450),]
-
-# loop over address, get lat/lon
-geo.done <- data.frame()
-for (i in 1:nrow(lr.geocode.sample)) {
-  g <- geocode(lr.geocode.sample$address[i])
-  g <- mutate(g, price=lr.geocode.sample$price_paid[i])
-  geo.done <- rbind(geo.done, g)
-}
-
-# export to csv for backup
-write.csv(geo.done, file = "/Users/samcomber/Documents/spatial_analysis/data/
-          geocoded_lr.csv", row.names=FALSE)
-
-# convert to spatial points df
-lr <- read.csv("lpool_pp.csv", header = TRUE, sep=",")
-coordinates(lr) <- ~lon + lat
-proj4string(lr) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-
-# write once
-writeOGR(lr, "/Users/samcomber/Documents/spatial_analysis/shp/spatial_join",
-         "lr", driver = "ESRI Shapefile")
-```
-
 We then tidy the data, before log transforming median housing price per LSOA to relax the assumption of normality:
 
 ```{r data_prep, results="hide"}
@@ -470,17 +414,13 @@ lsoa.join$md_2015 <- log(lsoa.join$md_2015)
 lsoa.join <- lsoa.join[complete.cases(lsoa.join),]
 ```
  
-\subsection{Model specification}
-
-\subsubsection{Null Model}
+\subsection{Null Model}
 
 Generally, our goal of estimation is the partial-pooling estimates of the median logged housing prices among all LSOAs in MSOA $j$. In our null model of no predictors, we approximate the multilevel estimate for MSOA $j$ as a weighted average of the mean of properties sold in the MSOA - an unpooled estimate $\hat{y}_j$ - and the mean across all MSOAs - the completely pooled estimate, $\hat{y}_\textnormal{all}$. As the weighted average uses information available about individual LSOAs, averages from MSOAs with a small number of constituent LSOAs carry less weighting, and so the multilevel estimate is pulled closer to Liverpool's overall average\footnote{In this way, the relative weights are determined by the sample size in the group and the variation within and between groups.} [@Gelman]. To allow this 'soft constraint' on $\alpha _j$, partial-pooling estimates are derived by assigning a probability distribution to the $\alpha_j$'s which pulls estimates of $\alpha _j$ some way towards their mean level $\mu _\alpha$ as below:
 
 $$ \alpha_j \sim \mathcal{N}(\mu _\alpha,\,\sigma_{\alpha}^{2})\, \textnormal{for } j = 1, . . ., J, $$ 
 
-where the mean $\mu _\alpha$ and standard deviation $\sigma _\alpha$ derived from the data.
-
-To begin decomposing how median log housing prices vary by LSOA and MSOA geographies, we specify the following null multilevel model:
+where the mean $\mu _\alpha$ and standard deviation $\sigma _\alpha$ derived from the data. To begin decomposing how median log housing prices vary by LSOA and MSOA geographies, we specify the following null multilevel model:
 
 $$ y_{ij} = \alpha_{0,j} + \epsilon_{ij} $$
 
@@ -488,7 +428,7 @@ $$ \alpha_{0j} = \alpha_0 + \mu_{0j} $$
 
 where in the first level, $y_{ij}$ is the median logged housing price for the $i^{th}$ LSOA in MSOA $j$, $\alpha_{0j}$ is the MSOA-level mean of $y_{ij}$ (varying intercept) for the $j^{th}$ MSOA, and $\epsilon_{ij}$ is the residual error term assumed i.i.d; where in the second level, $\alpha_0$ is the overall intercept, and finally $\mu_{0j}$ is the random error component for the deviation of the intercept of the $j^{th}$ group from the overall intercept.
 
-```{r null model, results="hide"}
+```{r null model}
 # ----------- NULL MODEL ------------
 
 # (1|MSOA11CD) allows intercept (coefficient of 1 is the constant 
@@ -529,7 +469,7 @@ msoa.rand.eff <- REsim(model.null)
 p <- plotREsim(msoa.rand.eff)
 ```
 
-\subsubsection{Random-slopes model}
+\subsection{Random-slopes model}
 
 To rationalise a varying intercept and slope model, we assess the variability between median housing prices and the percentage of neighbourhood income deprivation.
 
@@ -580,7 +520,7 @@ Firstly, we use a likelihood ratio test derived from an ANOVA table to estimate 
 summary(model.var.slope)
 ```
 
-To begin examining the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{1j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. Intuitively, this plot conforms with conventional wisdom: MSOAs with higher-than-average median log housing prices also have below-average slopes for income deprivation as shown in the bottom-right quadrant. Interestingly, in the bottom-left quadrant, we observe an MSOA *. 
+To begin interpreting the intercept and slope residuals, we graphically project the plot of income deprivation slopes by intercept ($\hat{\mu}_{1j}$ by $\hat{\mu}_{0j}$) in \autoref{fig:slope}. Intuitively, this plot conforms with conventional wisdom: MSOAs with higher-than-average median log housing prices also have below-average slopes for income deprivation as shown in the bottom-right quadrant. Interestingly, in the bottom-left quadrant, we observe an MSOA *. 
 
 ```{r, fig.cap = "\\label{fig:slope}Income deprivation slopes versus intercept."}
 # data object containing random slope and intercepts
@@ -591,7 +531,7 @@ abline(h = 0, col = "red")
 abline(v = 0, col = "red")
 ```
 
-To produce the equation for the fitted regression line of MSOA $j$, we estimate: $\hat{y} _{ij} =  (11.36 + \hat{\mu}_{0j}) + (-0.12 + \hat{\mu_{2j}})\textnormal{lr\_income}_{ij}$ where `11.36` and `-0.12` are derived from * and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot in \autoref{fig:slope}.
+To produce the equation for the fitted regression line of MSOA $j$, one can solve: $\hat{y} _{ij} =  (11.36 + \hat{\mu}_{0j}) + (-0.12 + \hat{\mu_{2j}})\textnormal{lr\_income}_{ij}$ where `11.36` and `-0.12` are derived from * and the values of $\hat{\mu}_{0j}$ and $\hat\mu_{2j}$ can be derived from the pairwise residual plot in \autoref{fig:slope}.
 
 ```{r}
 # create caterpillar graph 
@@ -599,9 +539,11 @@ msoa.rand <- REsim(model.var.slope)
 plotREsim(msoa.rand)
 ```
 
+\subsection{Space and conclusions}
+
 With our interest in space, we conclude this paper by displaying the spatial distribution of random slopes in \autoref{fig:spplot} using `spplot` for the presentation layer.
 
-```{r spplot, fig.cap = "\\label{fig:spplot}Income deprivation slopes versus intercept."}
+```{r spplot, fig.cap = "\\label{fig:spplot}Spatial patterning of varying slopes at MSOA scale.", echo=FALSE, results="hide", warning=FALSE}
 setwd("/Users/samcomber/Documents/spatial_analysis/shp/spatial_join")
 msoa <- readOGR(dsn = ".", layer = "msoa", stringsAsFactors = FALSE)
 msoa_code <- msoa.rand[msoa.rand$term == "(Intercept)", "groupID"]
@@ -624,8 +566,8 @@ xx <- msoa@bbox
 scalebar <- list("SpatialPolygonsRescale", layout.scale.bar(),
             offset = c(min(xx[1,] + 1000),xx[2,1] + 1000), scale = 5000,    fill=c("transparent","black"))
 
-text1 <- list("sp.text", c(min(xx[1,]) + 1000,xx[2,1] + 1500), "0")
-text2 <- list("sp.text", c(min(xx[1,]) + 6000,xx[2,1] + 1500), "5 km")
+text1 <- list("sp.text", c(min(xx[1,]) + 1000,xx[2,1] + 1600), "0")
+text2 <- list("sp.text", c(min(xx[1,]) + 6000,xx[2,1] + 1600), "5 km")
 northarrow <- list("SpatialPolygonsRescale", layout.north.arrow(),
                      offset = c(min(xx[1,]) + 2000,xx[2,1] + 2000), scale = 1500)
 
@@ -635,4 +577,8 @@ spplot(msoa, "msoa_slope", sp.layout = list(scalebar, text1, text2, northarrow),
 ```
 
 \section{Bibliography}
+
+* Openshaw, S. ()
+* 
+
 \section{Appendix}
